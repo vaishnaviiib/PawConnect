@@ -2,6 +2,7 @@ import express from "express";
 import mongoose from "mongoose";
 
 import Dog from "../models/Dog.js";
+import { protect, authorizeRoles } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -48,7 +49,7 @@ router.get("/:id", async (req, res, next) => {
   }
 });
 
-router.post("/", async (req, res, next) => {
+router.post("/", protect, authorizeRoles("shelter"), async (req, res, next) => {
   try {
     const {
       name,
