@@ -1,10 +1,8 @@
+import "./App.css";
+import SignUp from "./pages/SignUp/SignUp";
+
 function App() {
-  return (
-    <div>
-      <h1>PawLink</h1>
-      <p>Dog Foster and Adoption Platform</p>
-    </div>
-  );
+  return <SignUp />;
 }
 
 export default App;
