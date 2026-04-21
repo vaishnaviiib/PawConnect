@@ -1,13 +1,40 @@
+import { useNavigate, useLocation } from "react-router-dom";
 import "./BottomNav.css";
 
 function BottomNav() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   return (
-    <nav className="bottom-nav">
-      <span>Home</span>
-      <span>Browse</span>
-      <span>Applications</span>
-      <span>Profile</span>
-    </nav>
+    <div className="bottom-nav">
+      <button
+        className={`bottom-nav-item ${location.pathname === "/" ? "active" : ""}`}
+        onClick={() => navigate("/")}
+      >
+        <span>🏠</span>
+      </button>
+
+      <button
+        className={`bottom-nav-item ${location.pathname === "/browse" ? "active" : ""}`}
+        onClick={() => navigate("/browse")}
+      >
+        <span>🔍</span>
+      </button>
+
+      <button
+        className={`bottom-nav-item ${location.pathname === "/notifications" ? "active" : ""}`}
+        onClick={() => navigate("/notifications")}
+      >
+        <span>🔔</span>
+      </button>
+
+      <button
+        className={`bottom-nav-item ${location.pathname === "/profile" ? "active" : ""}`}
+        onClick={() => navigate("/profile")}
+      >
+        <span>👤</span>
+      </button>
+    </div>
   );
 }
 

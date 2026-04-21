@@ -1,0 +1,33 @@
+.profile-page {
+  min-height: 100vh;
+  background: #f7f0c8;
+  padding: 16px 16px 90px;
+  font-family: Arial, sans-serif;
+}
+
+.profile-status-bar {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 24px;
+}
+
+.profile-card {
+  max-width: 380px;
+  margin: 40px auto 0;
+  background: #fff8e6;
+  border-radius: 24px;
+  padding: 28px;
+  text-align: center;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.1);
+}
+
+.profile-avatar {
+  font-size: 60px;
+  margin-bottom: 12px;
+}
+
+.profile-card h1 {
+  margin-top: 0;
+}
