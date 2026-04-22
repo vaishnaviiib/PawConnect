@@ -79,6 +79,7 @@ body {
   border: 1px solid #d6ccd8;
   background: white;
   font-size: 14px;
+  color:#000;
 }
 
 .filter-actions {
@@ -89,6 +90,7 @@ body {
 }
 
 .filter-clear-btn,
+
 .filter-apply-btn {
   flex: 1;
   padding: 12px;
@@ -100,6 +102,8 @@ body {
 .filter-clear-btn {
   background: white;
   border: 1px solid #000;
+  color:#000;
+
 }
 
 .filter-apply-btn {
@@ -159,6 +163,7 @@ body {
   margin: 0 0 10px;
   font-size: 24px;
   font-weight: 700;
+  color: #000
 }
 
 .dog-location-info p {
@@ -179,8 +184,8 @@ body {
   height: 62px;
   border-radius: 50%;
   border: 2px solid #000;
-  background: #fff;
-  font-size: 24px;
+  background: transparent;
+  font-size: 40px;
   cursor: pointer;
 }
 
@@ -216,4 +221,62 @@ body {
   font-size: 22px;
   border-top-left-radius: 18px;
   border-top-right-radius: 18px;
+}
+
+.favorites-list {
+  max-width: 380px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.favorite-card {
+  background: #f2e5f2;
+  border-radius: 24px;
+  padding: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.favorite-card-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  flex: 1;
+}
+
+.favorite-image {
+  width: 82px;
+  height: 82px;
+  object-fit: cover;
+  border-radius: 16px;
+  display: block;
+}
+
+.favorite-info h3 {
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #000;
+}
+
+.favorite-info p {
+  margin: 4px 0;
+  font-size: 14px;
+  color: #3a3a3a;
+}
+
+.remove-favorite-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid #000;
+  background: transparent;
+  font-size: 26px;
+  cursor: pointer;
+  color: #000;
 }

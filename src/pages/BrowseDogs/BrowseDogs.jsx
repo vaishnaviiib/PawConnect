@@ -4,15 +4,16 @@ import "./BrowseDogs.css";
 import dogs from "../../mockData/dogs";
 import BottomNav from "../../components/BottomNav/BottomNav";
 
-
 function BrowseDogs() {
   const navigate = useNavigate();
 
   const [showFilters, setShowFilters] = useState(false);
+  const [selectedTab, setSelectedTab] = useState("forYou");
   const [selectedBreed, setSelectedBreed] = useState("All");
   const [selectedAge, setSelectedAge] = useState("All");
   const [selectedLocation, setSelectedLocation] = useState("All");
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [favorites, setFavorites] = useState([]);
 
   const filteredDogs = useMemo(() => {
     return dogs.filter((dog) => {
@@ -35,17 +36,31 @@ function BrowseDogs() {
   const currentDog = filteredDogs[currentIndex];
 
   const handleSkip = () => {
-    if (currentIndex < filteredDogs.length) {
+    if (currentIndex < filteredDogs.length - 1) {
       setCurrentIndex((prev) => prev + 1);
+    } else {
+      setCurrentIndex(filteredDogs.length);
     }
   };
 
   const handleLike = () => {
-    console.log("Liked dog:", currentDog);
+    if (!currentDog) return;
 
-    if (currentIndex < filteredDogs.length) {
-      setCurrentIndex((prev) => prev + 1);
+    const alreadyFavorited = favorites.some((dog) => dog.id === currentDog.id);
+
+    if (!alreadyFavorited) {
+      setFavorites((prev) => [...prev, currentDog]);
     }
+
+    if (currentIndex < filteredDogs.length - 1) {
+      setCurrentIndex((prev) => prev + 1);
+    } else {
+      setCurrentIndex(filteredDogs.length);
+    }
+  };
+
+  const removeFavorite = (id) => {
+    setFavorites((prev) => prev.filter((dog) => dog.id !== id));
   };
 
   const handleCardClick = () => {
@@ -54,9 +69,14 @@ function BrowseDogs() {
     }
   };
 
+  const handleFavoriteClick = (id) => {
+    navigate(`/dog/${id}`);
+  };
+
   const applyFilters = () => {
     setCurrentIndex(0);
     setShowFilters(false);
+    setSelectedTab("forYou");
   };
 
   const clearFilters = () => {
@@ -82,8 +102,22 @@ function BrowseDogs() {
           Filter
         </button>
 
-        <span className="browse-tab browse-tab-active">For you</span>
-        <span className="browse-tab">Favorites</span>
+        <button
+          className={`browse-tab-button ${selectedTab === "forYou" ? "browse-tab-active" : ""}`}
+          onClick={() => {
+            setSelectedTab("forYou");
+            setCurrentIndex(0);
+          }}
+        >
+          For you
+        </button>
+
+        <button
+          className={`browse-tab-button ${selectedTab === "favorites" ? "browse-tab-active" : ""}`}
+          onClick={() => setSelectedTab("favorites")}
+        >
+          Favorites
+        </button>
       </div>
 
       {showFilters && (
@@ -134,44 +168,91 @@ function BrowseDogs() {
         </div>
       )}
 
-      {currentDog ? (
-        <div className="dog-card">
-          <div className="dog-image-wrapper" onClick={handleCardClick}>
-            <img src={currentDog.image} alt={currentDog.name} className="dog-image" />
-            <div className="dog-decor dog-heart">💗</div>
-            <div className="dog-decor dog-crown">👑</div>
-            <div className="dog-decor dog-swirl">➰</div>
-          </div>
+      {selectedTab === "forYou" && (
+        <>
+          {currentDog ? (
+            <div className="dog-card">
+              <div className="dog-image-wrapper" onClick={handleCardClick}>
+                <img
+                  src={currentDog.image}
+                  alt={currentDog.name}
+                  className="dog-image"
+                />
+                <div className="dog-decor dog-heart">💗</div>
+                <div className="dog-decor dog-crown">👑</div>
+                <div className="dog-decor dog-swirl">➰</div>
+              </div>
 
-          <div className="dog-details" onClick={handleCardClick}>
-            <h2>
-              {currentDog.name} • {currentDog.age} yrs
-            </h2>
+              <div className="dog-details" onClick={handleCardClick}>
+                <h2>
+                  {currentDog.name} • {currentDog.age} yrs
+                </h2>
 
-            <div className="dog-location-info">
-              <p>🏠 {currentDog.location}</p>
-              <p>📍 {currentDog.distance}</p>
+                <div className="dog-location-info">
+                  <p>🏠 {currentDog.location}</p>
+                  <p>📍 {currentDog.distance}</p>
+                </div>
+              </div>
+
+              <div className="dog-actions">
+                <button className="dog-action-btn skip-btn" onClick={handleSkip}>
+                  ✕
+                </button>
+                <button className="dog-action-btn like-btn" onClick={handleLike}>
+                  ✓
+                </button>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="no-dogs-message">
+              <h2>No matching dogs found</h2>
+              <p>Try changing your filters or check back later.</p>
+            </div>
+          )}
+        </>
+      )}
 
-          <div className="dog-actions">
-            <button className="dog-action-btn skip-btn" onClick={handleSkip}>
-              ✕
-            </button>
-            <button className="dog-action-btn like-btn" onClick={handleLike}>
-              ✓
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="no-dogs-message">
-          <h2>No matching dogs found</h2>
-          <p>Try changing your filters or check back later.</p>
+      {selectedTab === "favorites" && (
+        <div className="favorites-list">
+          {favorites.length > 0 ? (
+            favorites.map((dog) => (
+              <div className="favorite-card" key={dog.id}>
+                <div
+                  className="favorite-card-left"
+                  onClick={() => handleFavoriteClick(dog.id)}
+                >
+                  <img
+                    src={dog.image}
+                    alt={dog.name}
+                    className="favorite-image"
+                  />
+
+                  <div className="favorite-info">
+                    <h3>{dog.name}</h3>
+                    <p>{dog.breed}</p>
+                    <p>{dog.location}</p>
+                  </div>
+                </div>
+
+                <button
+                  className="remove-favorite-btn"
+                  onClick={() => removeFavorite(dog.id)}
+                >
+                  ✕
+                </button>
+              </div>
+            ))
+          ) : (
+            <div className="no-dogs-message">
+              <h2>No favorites yet</h2>
+              <p>Tap ✓ on a dog to save it here.</p>
+            </div>
+          )}
         </div>
       )}
 
       <BottomNav />
-      </div>
+    </div>
   );
 }
 
