@@ -1,8 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./BrowseDogs.css";
-import dogs from "../../mockData/dogs";
 import BottomNav from "../../components/BottomNav/BottomNav";
+import { getDogs } from "../../lib/pawApi";
 
 function BrowseDogs() {
   const navigate = useNavigate();
@@ -14,15 +14,39 @@ function BrowseDogs() {
   const [selectedLocation, setSelectedLocation] = useState("All");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [favorites, setFavorites] = useState([]);
+  const [dogs, setDogs] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [dataSource, setDataSource] = useState("");
+  const [loadError, setLoadError] = useState("");
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadDogListings = async () => {
+      const result = await getDogs();
+
+      if (!isMounted) {
+        return;
+      }
+
+      setDogs(result.dogs);
+      setIsLoading(false);
+      setDataSource(result.source);
+      setLoadError(result.error);
+    };
+
+    loadDogListings();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const filteredDogs = useMemo(() => {
     return dogs.filter((dog) => {
-      const breedMatch =
-        selectedBreed === "All" || dog.breed === selectedBreed;
-
+      const breedMatch = selectedBreed === "All" || dog.breed === selectedBreed;
       const locationMatch =
         selectedLocation === "All" || dog.location === selectedLocation;
-
       const ageMatch =
         selectedAge === "All" ||
         (selectedAge === "0-2" && dog.age >= 0 && dog.age <= 2) ||
@@ -31,7 +55,27 @@ function BrowseDogs() {
 
       return breedMatch && locationMatch && ageMatch;
     });
-  }, [selectedBreed, selectedAge, selectedLocation]);
+  }, [dogs, selectedBreed, selectedAge, selectedLocation]);
+
+  useEffect(() => {
+    setCurrentIndex((prev) => {
+      if (filteredDogs.length === 0) {
+        return 0;
+      }
+
+      return prev >= filteredDogs.length ? 0 : prev;
+    });
+  }, [filteredDogs]);
+
+  const breedOptions = useMemo(
+    () => ["All", ...new Set(dogs.map((dog) => dog.breed).filter(Boolean))],
+    [dogs]
+  );
+
+  const locationOptions = useMemo(
+    () => ["All", ...new Set(dogs.map((dog) => dog.location).filter(Boolean))],
+    [dogs]
+  );
 
   const currentDog = filteredDogs[currentIndex];
 
@@ -44,7 +88,9 @@ function BrowseDogs() {
   };
 
   const handleLike = () => {
-    if (!currentDog) return;
+    if (!currentDog) {
+      return;
+    }
 
     const alreadyFavorited = favorites.some((dog) => dog.id === currentDog.id);
 
@@ -91,7 +137,7 @@ function BrowseDogs() {
     <div className="browse-page">
       <div className="browse-status-bar">
         <span>9:41</span>
-        <span>📶 📡 🔋</span>
+        <span>Network</span>
       </div>
 
       <div className="browse-tabs">
@@ -127,18 +173,19 @@ function BrowseDogs() {
           <label>Breed</label>
           <select
             value={selectedBreed}
-            onChange={(e) => setSelectedBreed(e.target.value)}
+            onChange={(event) => setSelectedBreed(event.target.value)}
           >
-            <option value="All">All</option>
-            <option value="Golden Retriever">Golden Retriever</option>
-            <option value="Labrador Retriever">Labrador Retriever</option>
-            <option value="German Shepherd">German Shepherd</option>
+            {breedOptions.map((breed) => (
+              <option key={breed} value={breed}>
+                {breed}
+              </option>
+            ))}
           </select>
 
           <label>Age</label>
           <select
             value={selectedAge}
-            onChange={(e) => setSelectedAge(e.target.value)}
+            onChange={(event) => setSelectedAge(event.target.value)}
           >
             <option value="All">All</option>
             <option value="0-2">0-2 years</option>
@@ -149,12 +196,13 @@ function BrowseDogs() {
           <label>Location</label>
           <select
             value={selectedLocation}
-            onChange={(e) => setSelectedLocation(e.target.value)}
+            onChange={(event) => setSelectedLocation(event.target.value)}
           >
-            <option value="All">All</option>
-            <option value="Plano, TX">Plano, TX</option>
-            <option value="Dallas, TX">Dallas, TX</option>
-            <option value="Richardson, TX">Richardson, TX</option>
+            {locationOptions.map((location) => (
+              <option key={location} value={location}>
+                {location}
+              </option>
+            ))}
           </select>
 
           <div className="filter-actions">
@@ -170,7 +218,25 @@ function BrowseDogs() {
 
       {selectedTab === "forYou" && (
         <>
-          {currentDog ? (
+          {isLoading ? (
+            <div className="no-dogs-message">
+              <h2>Loading dogs...</h2>
+              <p>Fetching the latest listings from PawConnect.</p>
+            </div>
+          ) : null}
+
+          {!isLoading ? (
+            <div className="no-dogs-message">
+              <p>
+                {dataSource === "api"
+                  ? "Showing live dog listings from the backend."
+                  : "Backend unavailable, showing sample dogs."}
+              </p>
+              {loadError ? <p>{loadError}</p> : null}
+            </div>
+          ) : null}
+
+          {!isLoading && currentDog ? (
             <div className="dog-card">
               <div className="dog-image-wrapper" onClick={handleCardClick}>
                 <img
@@ -178,28 +244,28 @@ function BrowseDogs() {
                   alt={currentDog.name}
                   className="dog-image"
                 />
-                <div className="dog-decor dog-heart">💗</div>
-                <div className="dog-decor dog-crown">👑</div>
-                <div className="dog-decor dog-swirl">➰</div>
+                <div className="dog-decor dog-heart">*</div>
+                <div className="dog-decor dog-crown">+</div>
+                <div className="dog-decor dog-swirl">o</div>
               </div>
 
               <div className="dog-details" onClick={handleCardClick}>
                 <h2>
-                  {currentDog.name} • {currentDog.age} yrs
+                  {currentDog.name} - {currentDog.age} yrs
                 </h2>
 
                 <div className="dog-location-info">
-                  <p>🏠 {currentDog.location}</p>
-                  <p>📍 {currentDog.distance}</p>
+                  <p>{currentDog.location}</p>
+                  {currentDog.distance ? <p>{currentDog.distance}</p> : null}
                 </div>
               </div>
 
               <div className="dog-actions">
                 <button className="dog-action-btn skip-btn" onClick={handleSkip}>
-                  ✕
+                  X
                 </button>
                 <button className="dog-action-btn like-btn" onClick={handleLike}>
-                  ✓
+                  ✔
                 </button>
               </div>
             </div>
@@ -238,14 +304,14 @@ function BrowseDogs() {
                   className="remove-favorite-btn"
                   onClick={() => removeFavorite(dog.id)}
                 >
-                  ✕
+                  X
                 </button>
               </div>
             ))
           ) : (
             <div className="no-dogs-message">
               <h2>No favorites yet</h2>
-              <p>Tap ✓ on a dog to save it here.</p>
+              <p>Save a dog to keep it here.</p>
             </div>
           )}
         </div>

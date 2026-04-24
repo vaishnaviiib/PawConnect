@@ -1,6 +1,186 @@
-.page-placeholder {
+.shelter-dashboard-page {
+  min-height: 100vh;
+  background: #f7f0c8;
+  padding: 24px 16px 40px;
+}
+
+.shelter-dashboard-shell {
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.shelter-dashboard-status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 18px;
+}
+
+.shelter-dashboard-hero {
+  background: #fff7df;
+  border: 1px solid #eadcb1;
+  border-radius: 24px;
   padding: 24px;
+  box-shadow: 0 16px 40px rgba(77, 60, 20, 0.12);
+}
+
+.shelter-dashboard-kicker {
+  margin: 0 0 8px;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #7e6f56;
+}
+
+.shelter-dashboard-hero h1 {
+  margin: 0 0 8px;
+  font-size: 30px;
+  color: #24190f;
+}
+
+.shelter-dashboard-hero p {
+  margin: 0;
+  line-height: 1.5;
+  color: #5b4c37;
+}
+
+.shelter-dashboard-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.shelter-metric-card {
+  background: #f4e6f1;
+  border: 1px solid #e3cfe4;
+  border-radius: 18px;
+  padding: 16px 14px;
+}
+
+.shelter-metric-label {
+  display: block;
+  font-size: 12px;
+  color: #6d5870;
+  margin-bottom: 8px;
+}
+
+.shelter-metric-card strong {
+  font-size: 24px;
+  color: #21151f;
+}
+
+.shelter-dashboard-actions {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.shelter-action-card {
+  background: #dfead8;
+  border: 1px solid #c9d7c2;
+  border-radius: 20px;
+  padding: 18px 20px;
+  text-decoration: none;
+  color: #1f231b;
+}
+
+.shelter-action-card span {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.shelter-action-card strong {
+  font-size: 19px;
+}
+
+.shelter-dashboard-section {
+  margin-top: 20px;
+  background: #fffdf6;
+  border: 1px solid #efe3c5;
+  border-radius: 24px;
+  padding: 18px;
+}
+
+.shelter-section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.shelter-section-heading h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.shelter-section-heading a {
+  color: #5e4871;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.shelter-dog-list {
+  display: grid;
+  gap: 12px;
+}
+
+.shelter-empty-card {
+  background: #f9f3ff;
+  border-radius: 18px;
+  padding: 18px;
+}
+
+.shelter-empty-card h3,
+.shelter-empty-card p {
+  margin: 0;
+}
+
+.shelter-empty-card p {
+  margin-top: 8px;
+  color: #574c59;
+  line-height: 1.4;
+}
+
+.shelter-dog-card {
+  display: grid;
+  grid-template-columns: 88px 1fr;
+  gap: 12px;
+  align-items: center;
+  background: #f9f3ff;
+  border-radius: 18px;
+  padding: 10px;
+}
+
+.shelter-dog-card img {
+  width: 88px;
+  height: 88px;
+  object-fit: cover;
   border-radius: 16px;
-  background: #ffffff;
-  border: 1px solid #dbe4f0;
+}
+
+.shelter-dog-copy h3,
+.shelter-dog-copy p {
+  margin: 0;
+}
+
+.shelter-dog-copy p {
+  margin-top: 6px;
+  color: #574c59;
+  line-height: 1.4;
+}
+
+.shelter-status-pill {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid #dfcde4;
+  font-size: 12px;
+  font-weight: 600;
 }

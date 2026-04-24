@@ -1,15 +1,18 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import "./Notifications.css";
 import notifications from "../../mockData/notifications";
 import BottomNav from "../../components/BottomNav/BottomNav";
+import { getApplicationNotifications, getVisitNotifications } from "../../lib/pawApi";
 
 function Notifications() {
   const [activeTab, setActiveTab] = useState("applications");
+  const localApplicationNotifications = useMemo(() => getApplicationNotifications(), []);
+  const localVisitNotifications = useMemo(() => getVisitNotifications(), []);
 
   const displayedNotifications =
     activeTab === "applications"
-      ? notifications.applications
-      : notifications.visits;
+      ? [...localApplicationNotifications, ...notifications.applications]
+      : [...localVisitNotifications, ...notifications.visits];
 
   return (
     <div className="notifications-page">

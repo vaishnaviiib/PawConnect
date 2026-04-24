@@ -1,6 +1,163 @@
-.page-placeholder {
-  padding: 24px;
+.review-applications-page {
+  min-height: 100vh;
+  background: #dce7f6;
+  padding: 24px 16px 40px;
+}
+
+.review-applications-shell {
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.review-applications-status {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 18px;
+}
+
+.review-applications-header {
+  background: #eff5fe;
+  border: 1px solid #ceddf2;
+  border-radius: 24px;
+  padding: 22px;
+  box-shadow: 0 14px 36px rgba(47, 69, 100, 0.12);
+}
+
+.review-applications-header h1 {
+  margin: 0 0 8px;
+  color: #162031;
+  font-size: 40px;
+}
+
+.review-applications-header p {
+  margin: 0;
+  color: #526178;
+  line-height: 1.5;
+  
+  
+}
+
+.review-applications-list {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+  
+}
+
+.review-application-card {
+  background: #fffdf8;
+  border: 1px solid #eee1c9;
+  border-radius: 24px;
+  padding: 18px;
+}
+
+.review-application-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  
+}
+
+.review-application-top h2,
+.review-application-top p {
+  margin: 0;
+
+}
+
+.review-application-top p {
+  margin-top: 6px;
+  color: #64543d;
+  
+}
+
+.review-application-top span {
+  padding: 8px 10px;
+  border-radius: 999px;
+  background: #f4e8fa;
+  color: #5f456d;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.review-application-meta {
+  display: grid;
+  gap: 10px;
+  margin: 16px 0 0;
+}
+
+.review-application-meta div {
+  background: #fff;
   border-radius: 16px;
-  background: #ffffff;
-  border: 1px solid #dbe4f0;
+  padding: 12px 14px;
+}
+
+.review-application-meta dt {
+  font-size: 12px;
+  font-weight: 700;
+  color: #77644b;
+  margin-bottom: 4px;
+}
+
+.review-application-meta dd {
+  margin: 0;
+  color: #2d2114;
+  line-height: 1.45;
+}
+
+.review-application-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.review-application-actions button {
+  border: none;
+  border-radius: 14px;
+  padding: 12px 10px;
+  background: #1f1620;
+  color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.review-application-actions button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.review-visit-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 14px;
+  color:black; 
+}
+
+.review-visit-form input,
+
+
+.review-visit-form button {
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-size: 14px;
+  color:black; 
+}
+
+.review-visit-form input {
+  border: 1px solid #c9d8ee;
+  background: transparent;
+  color:black; 
+}
+
+.review-visit-form button {
+  grid-column: 1 / -1;
+  border: none;
+  background: #5a6f98;
+  color: transparent;
+  cursor: pointer;
+
 }

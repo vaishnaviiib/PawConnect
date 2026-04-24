@@ -1,6 +1,130 @@
-.page-placeholder {
-  padding: 24px;
-  border-radius: 16px;
-  background: #ffffff;
-  border: 1px solid #dbe4f0;
+.manage-appointments-page {
+  min-height: 100vh;
+  background: #dfead8;
+  padding: 24px 16px 40px;
+}
+
+.manage-appointments-shell {
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.manage-appointments-status {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 18px;
+}
+
+.manage-appointments-header {
+  background: #f5fbf0;
+  border: 1px solid #d3e1cb;
+  border-radius: 24px;
+  padding: 22px;
+  box-shadow: 0 14px 36px rgba(53, 82, 40, 0.12);
+}
+
+.manage-appointments-header h1 {
+  margin: 0 0 8px;
+  color: #182015;
+}
+
+.manage-appointments-header p {
+  margin: 0;
+  color: #556151;
+  line-height: 1.5;
+}
+
+.manage-appointments-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.manage-appointments-summary article {
+  background: #fff9ec;
+  border-radius: 20px;
+  padding: 18px 16px;
+}
+
+.manage-appointments-summary span {
+  display: block;
+  color: #6e6048;
+  margin-bottom: 8px;
+}
+
+.manage-appointments-summary strong {
+  font-size: 22px;
+  color: #21190f;
+}
+
+.manage-appointments-list {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.manage-appointment-card {
+  background: #fff;
+  border: 1px solid #d6e1d0;
+  border-radius: 24px;
+  padding: 18px;
+}
+
+.manage-appointment-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.manage-appointment-top h2,
+.manage-appointment-top p,
+.manage-appointment-dog,
+.manage-appointment-slot {
+  margin: 0;
+}
+
+.manage-appointment-top p,
+.manage-appointment-dog {
+  color: #596655;
+}
+
+.manage-appointment-top span {
+  padding: 8px 10px;
+  border-radius: 999px;
+  background: #eef5e9;
+  color: #3f5138;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.manage-appointment-dog {
+  margin-top: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a2117;
+}
+
+.manage-appointment-slot {
+  margin-top: 6px;
+  color: #6d735f;
+}
+
+.manage-appointment-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.manage-appointment-actions button {
+  border: none;
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: #1b2117;
+  color: #fff;
+  cursor: pointer;
+  font-size: 14px;
 }

@@ -12,8 +12,8 @@ function Profile() {
       <div className="profile-card">
         <div className="profile-avatar">🐶</div>
         <h1>User Profile</h1>
-        <p>Name: Sally Xu</p>
-        <p>Email: sally@example.com</p>
+        <p>Name: Karla Umanzor</p>
+        <p>Email: Karla@example.com</p>
         <p>Role: Adopter</p>
       </div>
 
