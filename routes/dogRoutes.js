@@ -67,6 +67,7 @@ router.post("/", protect, authorizeRoles("shelter"), async (req, res, next) => {
     } = req.body;
 
     const dog = await Dog.create({
+      shelterId: req.user._id,
       name,
       breed,
       age,

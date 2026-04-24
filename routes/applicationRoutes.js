@@ -3,15 +3,16 @@ import mongoose from "mongoose";
 
 import Application from "../models/Application.js";
 import Dog from "../models/Dog.js";
+import User from "../models/User.js";
+import { protect, authorizeRoles } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
 const isValidObjectId = (value) => mongoose.Types.ObjectId.isValid(value);
 
-router.post("/", async (req, res, next) => {
+router.post("/", protect, authorizeRoles("adopter"), async (req, res, next) => {
   try {
     const {
-      userId,
       dogId,
       shelterId,
       applicantName,
@@ -25,7 +26,6 @@ router.post("/", async (req, res, next) => {
     } = req.body;
 
     const idsToValidate = [
-      { key: "userId", value: userId },
       { key: "dogId", value: dogId },
       { key: "shelterId", value: shelterId },
     ];
@@ -39,7 +39,7 @@ router.post("/", async (req, res, next) => {
       });
     }
 
-    const dog = await Dog.findById(dogId);
+    const dog = await Dog.findById(dogId).select("shelterId");
 
     if (!dog) {
       return res.status(404).json({
@@ -48,8 +48,31 @@ router.post("/", async (req, res, next) => {
       });
     }
 
+    if (!dog.shelterId) {
+      return res.status(400).json({
+        success: false,
+        message: "Dog is missing shelter ownership data",
+      });
+    }
+
+    const shelter = await User.findOne({ _id: shelterId, role: "shelter" }).select("_id");
+
+    if (!shelter) {
+      return res.status(404).json({
+        success: false,
+        message: "Shelter not found",
+      });
+    }
+
+    if (dog.shelterId.toString() !== shelterId) {
+      return res.status(400).json({
+        success: false,
+        message: "Dog does not belong to the provided shelter",
+      });
+    }
+
     const application = await Application.create({
-      userId,
+      userId: req.user._id,
       dogId,
       shelterId,
       applicantName,
@@ -84,31 +107,19 @@ router.post("/", async (req, res, next) => {
   }
 });
 
-router.get("/", async (req, res, next) => {
+router.get("/", protect, async (req, res, next) => {
   try {
-    const { userId, shelterId } = req.query;
     const filters = {};
 
-    if (userId) {
-      if (!isValidObjectId(userId)) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid userId",
-        });
-      }
-
-      filters.userId = userId;
-    }
-
-    if (shelterId) {
-      if (!isValidObjectId(shelterId)) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid shelterId",
-        });
-      }
-
-      filters.shelterId = shelterId;
+    if (req.user.role === "adopter") {
+      filters.userId = req.user._id;
+    } else if (req.user.role === "shelter") {
+      filters.shelterId = req.user._id;
+    } else {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to access applications",
+      });
     }
 
     const applications = await Application.find(filters)
@@ -119,8 +130,8 @@ router.get("/", async (req, res, next) => {
       success: true,
       count: applications.length,
       filters: {
-        userId: userId || null,
-        shelterId: shelterId || null,
+        userId: req.user.role === "adopter" ? req.user._id : null,
+        shelterId: req.user.role === "shelter" ? req.user._id : null,
       },
       data: applications,
     });
@@ -129,7 +140,7 @@ router.get("/", async (req, res, next) => {
   }
 });
 
-router.patch("/:id", async (req, res, next) => {
+router.patch("/:id", protect, authorizeRoles("shelter"), async (req, res, next) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -149,8 +160,8 @@ router.patch("/:id", async (req, res, next) => {
       });
     }
 
-    const application = await Application.findByIdAndUpdate(
-      id,
+    const application = await Application.findOneAndUpdate(
+      { _id: id, shelterId: req.user._id },
       { status },
       { new: true, runValidators: true }
     ).populate("dogId");

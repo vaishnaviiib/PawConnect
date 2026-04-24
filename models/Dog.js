@@ -2,6 +2,11 @@ import mongoose from "mongoose";
 
 const dogSchema = new mongoose.Schema(
   {
+    shelterId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: [true, "Shelter id is required"],
+    },
     name: {
       type: String,
       required: [true, "Dog name is required"],
