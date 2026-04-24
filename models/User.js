@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 
+// Users can sign in either as adopters or shelters.
 const userSchema = new mongoose.Schema(
     {
         name: {
@@ -13,6 +14,11 @@ const userSchema = new mongoose.Schema(
             required: [true, "Email is required"],
             unique: true,
             lowercase: true,
+            trim: true,
+        },
+        phone: {
+            type: String,
+            required: [true, "Phone number is required"], 
             trim: true,
         },
         password: {
@@ -29,7 +35,7 @@ const userSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-// Hash the password before saving the user
+// Hash passwords once before storing them in MongoDB.
 userSchema.pre('save', async function () {
     if (!this.isModified('password')) {
         return;
@@ -38,7 +44,7 @@ userSchema.pre('save', async function () {
         this.password = await bcrypt.hash(this.password, salt);
 });
 
-//compare entered password with hashed password in database
+// Compare a plain-text login password to the stored hash.
 userSchema.methods.matchPassword = async function (enteredPassword) {
     return await bcrypt.compare(enteredPassword, this.password);
 };

@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 
+// Each dog belongs to the shelter account that created it.
 const dogSchema = new mongoose.Schema(
   {
     shelterId: {

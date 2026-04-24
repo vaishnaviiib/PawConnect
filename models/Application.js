@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 
+// Applications connect an adopter, a dog, and the shelter managing that dog.
 const applicationSchema = new mongoose.Schema(
   {
     userId: {

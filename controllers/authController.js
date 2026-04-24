@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
-// Generate JWT token
+// Generate a signed token the frontend can store and send on later requests.
 const generateToken = (id) => {
     return jwt.sign(
         { id },
@@ -12,9 +12,10 @@ const generateToken = (id) => {
 
 export const registerUser = async (req, res) => {
     try {
-        const { name, email, password, role } = req.body || {};
+        const { name, email, phone, password, role } = req.body || {};
 
-        if (!name || !email || !password || !role) {
+        // Keep registration strict so incomplete users are never saved.
+        if (!name || !email || !phone || !password || !role) {
             return res.status(400).json({ 
                 success: false,
                 message: "All fields are required" });
@@ -35,9 +36,11 @@ export const registerUser = async (req, res) => {
                 message: "Email already in use" });
         }
 
+        // The model hashes the password in its pre-save hook.
         const user = await User.create({
             name,
             email: email.toLowerCase(),
+            phone,
             password,
             role,
         });
@@ -49,6 +52,7 @@ export const registerUser = async (req, res) => {
                 _id: user._id,
                 name: user.name,
                 email: user.email,
+                phone: user.phone,
                 role: user.role
             },  
             token: generateToken(user._id),
@@ -72,6 +76,7 @@ export const loginUser = async (req, res) => {
                 message: "Email and password are required" });
         }
 
+        // Look up users by normalized email so login matches registration.
         const user = await User.findOne({ email: email.toLowerCase() });
 
         if (!user || !(await user.matchPassword(password))) {

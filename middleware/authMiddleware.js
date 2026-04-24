@@ -5,7 +5,7 @@ export const protect = async (req, res, next) => {
     let token;
 
     try {
-        //check if token exists in authorization header
+        // Read the JWT from the standard Bearer token header.
         if (
             req.headers.authorization &&
             req.headers.authorization.startsWith("Bearer"))
@@ -20,9 +20,8 @@ export const protect = async (req, res, next) => {
             });
         }
 
-        //verify token and get user id from payload
+        // Decode the token and attach the matching user to the request.
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        //attach user to request object, excluding password
         req.user = await User.findById(decoded.id).select("-password");
 
         if (!req.user) {
@@ -43,6 +42,7 @@ export const protect = async (req, res, next) => {
 
 export const authorizeRoles = (...roles) => {
     return (req, res, next) => {
+        // Restrict route access to users with one of the allowed roles.
         if (!req.user || !roles.includes(req.user.role)) {
             return res.status(403).json({
                 success: false,

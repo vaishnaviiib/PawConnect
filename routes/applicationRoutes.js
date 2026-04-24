@@ -39,6 +39,7 @@ router.post("/", protect, authorizeRoles("adopter"), async (req, res, next) => {
       });
     }
 
+    // Only the owning shelter should receive applications for a dog.
     const dog = await Dog.findById(dogId).select("shelterId");
 
     if (!dog) {
@@ -111,6 +112,7 @@ router.get("/", protect, async (req, res, next) => {
   try {
     const filters = {};
 
+    // Scope application visibility to the logged-in user’s role.
     if (req.user.role === "adopter") {
       filters.userId = req.user._id;
     } else if (req.user.role === "shelter") {
@@ -160,6 +162,7 @@ router.patch("/:id", protect, authorizeRoles("shelter"), async (req, res, next) 
       });
     }
 
+    // Shelters can only update applications that belong to their own account.
     const application = await Application.findOneAndUpdate(
       { _id: id, shelterId: req.user._id },
       { status },
