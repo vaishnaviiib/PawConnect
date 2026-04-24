@@ -72,6 +72,8 @@ const dogSchema = new mongoose.Schema(
   }
 );
 
+dogSchema.index({ shelterId: 1, createdAt: -1 });
+
 const Dog = mongoose.model("Dog", dogSchema);
 
 export default Dog;

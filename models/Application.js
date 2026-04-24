@@ -4,6 +4,7 @@ const applicationSchema = new mongoose.Schema(
   {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
       required: [true, "User id is required"],
     },
     dogId: {
@@ -13,6 +14,7 @@ const applicationSchema = new mongoose.Schema(
     },
     shelterId: {
       type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
       required: [true, "Shelter id is required"],
     },
     applicantName: {
@@ -67,6 +69,9 @@ const applicationSchema = new mongoose.Schema(
     versionKey: false,
   }
 );
+
+applicationSchema.index({ userId: 1, dogId: 1 }, { unique: true });
+applicationSchema.index({ shelterId: 1, status: 1, createdAt: -1 });
 
 const Application = mongoose.model("Application", applicationSchema);
 
