@@ -6,39 +6,84 @@ import { protect, authorizeRoles } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 const isValidObjectId = (value) => mongoose.Types.ObjectId.isValid(value);
+const mapDogForClient = (dog) => {
+  const rawDog = dog.toObject ? dog.toObject() : dog;
+
+  return {
+    ...rawDog,
+    id: String(rawDog._id),
+    image: rawDog.photos?.[0] || "",
+  };
+};
 
 router.get("/", async (req, res, next) => {
   try {
-    const {breed, age, size} = req.query;
-    const filter = {};
+    const {
+      breed,
+      size,
+      location,
+      adoptionType,
+      status,
+      minAge,
+      maxAge,
+      page = 1,
+      limit = 20,
+    } = req.query;
 
-    if (breed) {
-      filter.breed = new RegExp(breed, "i");
-    }
-    
-    if (age) { 
-      const ageNumber = Number(age);
+    const filters = {};
 
-      if (Number.isNaN(ageNumber) || ageNumber < 0) {
+    if (breed) filters.breed = breed;
+    if (size) filters.size = size;
+    if (location) filters.location = location;
+    if (adoptionType) filters.adoptionType = adoptionType;
+    if (status) filters.status = status;
+
+    if (minAge || maxAge) {
+      const parsedMinAge = minAge ? Number(minAge) : null;
+      const parsedMaxAge = maxAge ? Number(maxAge) : null;
+
+      if (
+        (minAge && (Number.isNaN(parsedMinAge) || parsedMinAge < 0)) ||
+        (maxAge && (Number.isNaN(parsedMaxAge) || parsedMaxAge < 0))
+      ) {
         return res.status(400).json({
           success: false,
-          message: "Age must be a number",
+          message: "Age filters must be non-negative numbers",
         });
       }
 
-      filter.age = ageNumber;
-  }
+      if (
+        parsedMinAge !== null &&
+        parsedMaxAge !== null &&
+        parsedMinAge > parsedMaxAge
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "minAge cannot be greater than maxAge",
+        });
+      }
 
-    if (size) {
-      filter.size = size;
+      filters.age = {};
+      if (parsedMinAge !== null) filters.age.$gte = parsedMinAge;
+      if (parsedMaxAge !== null) filters.age.$lte = parsedMaxAge;
     }
 
-    const dogs = await Dog.find(filter).sort({ createdAt: -1 });
+    const pageNumber = Math.max(Number(page) || 1, 1);
+    const limitNumber = Math.min(Math.max(Number(limit) || 20, 1), 100);
+    const skip = (pageNumber - 1) * limitNumber;
+
+    const [dogs, total] = await Promise.all([
+      Dog.find(filters).sort({ createdAt: -1 }).skip(skip).limit(limitNumber),
+      Dog.countDocuments(filters),
+    ]);
 
     res.status(200).json({
       success: true,
+      page: pageNumber,
+      limit: limitNumber,
+      total,
       count: dogs.length,
-      data: dogs,
+      data: dogs.map(mapDogForClient),
     });
   } catch (error) {
     next(error);
@@ -67,7 +112,7 @@ router.get("/:id", async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      data: dog,
+      data: mapDogForClient(dog),
     });
   } catch (error) {
     next(error);
@@ -111,7 +156,7 @@ router.post("/", protect, authorizeRoles("shelter"), async (req, res, next) => {
     res.status(201).json({
       success: true,
       message: "Dog created successfully",
-      data: dog,
+      data: mapDogForClient(dog),
     });
   } catch (error) {
     if (error.name === "ValidationError") {
@@ -130,46 +175,14 @@ router.patch("/:id", protect, authorizeRoles("shelter"), async (req, res, next) 
   try {
     const { id } = req.params;
 
-    if (!isValidObjectId(id)) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
         success: false,
         message: "Invalid dog id",
       });
     }
 
-    const allowedUpdates = [
-      "name",
-      "breed",
-      "age",
-      "size",
-      "temperament",
-      "location",
-      "adoptionType",
-      "status",
-      "description",
-      "specialNeeds",
-      "healthInfo",
-      "photos",
-    ];
-
-    // Ignore unexpected fields so shelters cannot overwrite protected data.
-    const updateData = Object.fromEntries(
-      Object.entries(req.body).filter(([key]) => allowedUpdates.includes(key))
-    );
-
-    if (Object.keys(updateData).length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: "No valid fields provided for update",
-      });
-    }
-
-    // A shelter can only edit dogs it originally created.
-    const dog = await Dog.findOneAndUpdate(
-      { _id: id, shelterId: req.user._id },
-      updateData,
-      { new: true, runValidators: true }
-    );
+    const dog = await Dog.findById(id);
 
     if (!dog) {
       return res.status(404).json({
@@ -178,10 +191,26 @@ router.patch("/:id", protect, authorizeRoles("shelter"), async (req, res, next) 
       });
     }
 
+    if (String(dog.shelterId) !== String(req.user._id)) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to update this dog profile",
+      });
+    }
+
+    const disallowedFields = ["_id", "shelterId", "createdAt", "updatedAt"];
+    const updates = { ...req.body };
+    disallowedFields.forEach((field) => delete updates[field]);
+
+    const updatedDog = await Dog.findByIdAndUpdate(id, updates, {
+      new: true,
+      runValidators: true,
+    });
+
     res.status(200).json({
       success: true,
       message: "Dog updated successfully",
-      data: dog,
+      data: mapDogForClient(updatedDog),
     });
   } catch (error) {
     if (error.name === "ValidationError") {
@@ -200,15 +229,14 @@ router.delete("/:id", protect, authorizeRoles("shelter"), async (req, res, next)
   try {
     const { id } = req.params;
 
-    if (!isValidObjectId(id)) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
         success: false,
         message: "Invalid dog id",
       });
     }
 
-    // A shelter can only delete dogs it originally created.
-    const dog = await Dog.findOneAndDelete({ _id: id, shelterId: req.user._id });
+    const dog = await Dog.findById(id);
 
     if (!dog) {
       return res.status(404).json({
@@ -217,10 +245,18 @@ router.delete("/:id", protect, authorizeRoles("shelter"), async (req, res, next)
       });
     }
 
+    if (String(dog.shelterId) !== String(req.user._id)) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to delete this dog profile",
+      });
+    }
+
+    await dog.deleteOne();
+
     res.status(200).json({
       success: true,
       message: "Dog deleted successfully",
-      data: dog,
     });
   } catch (error) {
     next(error);
