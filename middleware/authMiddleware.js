@@ -1,0 +1,55 @@
+import jwt from "jsonwebtoken";
+import User from "../models/User.js";
+
+export const protect = async (req, res, next) => {
+    let token;
+
+    try {
+        // Read the JWT from the standard Bearer token header.
+        if (
+            req.headers.authorization &&
+            req.headers.authorization.startsWith("Bearer"))
+        {
+            token = req.headers.authorization.split(" ")[1];
+        }
+
+        if (!token) {
+            return res.status(401).json({
+                success: false,
+                message: "Not authorized, no token",
+            });
+        }
+
+        // Decode the token and attach the matching user to the request.
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        req.user = await User.findById(decoded.id).select("-password");
+
+        if (!req.user) {
+            return res.status(401).json({
+                success: false,
+                message: "Not authorized, user not found",
+            });
+        }
+
+        next();
+    } catch {
+        return res.status(401).json({
+            success: false,
+            message: "Not authorized, token failed",
+        });
+    }
+};
+
+export const authorizeRoles = (...roles) => {
+    return (req, res, next) => {
+        // Restrict route access to users with one of the allowed roles.
+        if (!req.user || !roles.includes(req.user.role)) {
+            return res.status(403).json({
+                success: false,
+                message: "Not authorized to access this resource",
+            });
+        }
+
+        next();
+    };
+};

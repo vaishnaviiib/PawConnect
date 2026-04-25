@@ -57,15 +57,13 @@ function BrowseDogs() {
     });
   }, [dogs, selectedBreed, selectedAge, selectedLocation]);
 
-  useEffect(() => {
-    setCurrentIndex((prev) => {
-      if (filteredDogs.length === 0) {
-        return 0;
-      }
+  const listIndex = useMemo(() => {
+    if (filteredDogs.length === 0) {
+      return 0;
+    }
 
-      return prev >= filteredDogs.length ? 0 : prev;
-    });
-  }, [filteredDogs]);
+    return currentIndex >= filteredDogs.length ? 0 : currentIndex;
+  }, [filteredDogs, currentIndex]);
 
   const breedOptions = useMemo(
     () => ["All", ...new Set(dogs.map((dog) => dog.breed).filter(Boolean))],
@@ -77,11 +75,11 @@ function BrowseDogs() {
     [dogs]
   );
 
-  const currentDog = filteredDogs[currentIndex];
+  const currentDog = filteredDogs[listIndex];
 
   const handleSkip = () => {
-    if (currentIndex < filteredDogs.length - 1) {
-      setCurrentIndex((prev) => prev + 1);
+    if (listIndex < filteredDogs.length - 1) {
+      setCurrentIndex(listIndex + 1);
     } else {
       setCurrentIndex(filteredDogs.length);
     }
@@ -98,8 +96,8 @@ function BrowseDogs() {
       setFavorites((prev) => [...prev, currentDog]);
     }
 
-    if (currentIndex < filteredDogs.length - 1) {
-      setCurrentIndex((prev) => prev + 1);
+    if (listIndex < filteredDogs.length - 1) {
+      setCurrentIndex(listIndex + 1);
     } else {
       setCurrentIndex(filteredDogs.length);
     }

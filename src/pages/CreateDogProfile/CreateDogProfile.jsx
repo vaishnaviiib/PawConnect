@@ -173,7 +173,9 @@ function CreateDogProfile() {
             ) : null}
           </section>
 
-          <button type="submit">Save mock profile</button>
+          <button type="submit" disabled={isSaving}>
+            {isSaving ? "Saving…" : "Save mock profile"}
+          </button>
           {status ? <p className="create-dog-inline-status">{status}</p> : null}
         </form>
 
