@@ -27,12 +27,32 @@ const writeJson = (key, value) => {
 };
 
 const getErrorMessage = async (response) => {
-  try {
-    const payload = await response.json();
-    return payload.message || "Request failed";
-  } catch {
-    return "Request failed";
+  const status = response.status;
+  const statusText = response.statusText || "";
+  const fallback =
+    status >= 500 || status === 502 || status === 503
+      ? `Cannot reach API (HTTP ${status}${statusText ? ` ${statusText}` : ""}). Is the server running (e.g. npm run dev:server on port 5000)?`
+      : `Request failed (HTTP ${status}${statusText ? ` ${statusText}` : ""})`;
+
+  const contentType = response.headers.get("content-type") || "";
+  const text = await response.text();
+
+  if (!text.trim()) {
+    return fallback;
   }
+
+  if (contentType.includes("application/json")) {
+    try {
+      const payload = JSON.parse(text);
+      return typeof payload.message === "string" && payload.message.trim()
+        ? payload.message
+        : fallback;
+    } catch {
+      return fallback;
+    }
+  }
+
+  return fallback;
 };
 
 const apiFetch = async (path, options = {}) => {
@@ -132,11 +152,11 @@ export const saveCurrentUser = (value) => {
   writeJson(CURRENT_USER_KEY, value);
 };
 
-export const registerUser = async ({ name, email, password, role }) => {
+export const registerUser = async ({ name, email, phone, password, role }) => {
   try {
     const payload = await apiFetch("/auth/register", {
       method: "POST",
-      body: JSON.stringify({ name, email, password, role }),
+      body: JSON.stringify({ name, email, phone, password, role }),
     });
 
     const user = {
@@ -160,6 +180,7 @@ export const registerUser = async ({ name, email, password, role }) => {
       _id: `local-user-${Date.now()}`,
       name,
       email,
+      phone: phone || "",
       role,
       token: "",
       source: "local",

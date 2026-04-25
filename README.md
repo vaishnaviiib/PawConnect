@@ -10,7 +10,7 @@ Full-stack app: React (Vite) client and Express + MongoDB API.
 
 ## Environment
 
-Create a `.env` file in the project root (do not commit it):
+Copy [`.env.example`](.env.example) to `.env` and fill in real values, or create `.env` manually (do not commit it):
 
 ```
 MONGO_URI=your_mongodb_connection_string
@@ -30,6 +30,8 @@ Use two terminals from the repo root after `npm install`:
 
 1. **API:** `npm run dev:server` — serves on `http://127.0.0.1:5000` by default.
 2. **Client:** `npm run dev:client` — Vite dev server with a proxy to the API so the browser can call `/auth`, `/dogs`, and `/applications` on the same origin.
+
+**If the UI shows “Backend unavailable” or a generic API error after signup:** start the API first (step 1) and ensure `.env` has valid `MONGO_URI` and `JWT_SECRET`. The Vite proxy targets port **5000** by default ([`vite.config.js`](vite.config.js)).
 
 For production API only: `npm start`.
 

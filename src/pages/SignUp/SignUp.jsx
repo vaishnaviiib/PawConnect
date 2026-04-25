@@ -1,13 +1,14 @@
 import "./SignUp.css";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { registerUser, saveCurrentUser } from "../../lib/pawApi";
+import { registerUser } from "../../lib/pawApi";
 
 function SignUp() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    phone: "",
     password: "",
     role: "",
   });
@@ -37,25 +38,22 @@ function SignUp() {
       const payload = await registerUser({
         name: formData.name.trim(),
         email: formData.email.trim(),
+        phone: formData.phone.trim(),
         password: formData.password,
         role: formData.role,
       });
 
-      saveCurrentUser({
-        ...payload.user,
-        token: payload.token,
-        source: "local",
-      });
-
-      setStatus({
-        type: "success",
-        message: payload.message || "Account created successfully.",
-      });
+      // registerUser() persists the user (API or local fallback) in pawApi.
 
       if (payload.error) {
         setStatus({
           type: "error",
-          message: `${payload.message} ${payload.error}`,
+          message: `${payload.message} ${payload.error}`.trim(),
+        });
+      } else {
+        setStatus({
+          type: "success",
+          message: payload.message || "Account created successfully.",
         });
       }
 
@@ -105,6 +103,15 @@ function SignUp() {
             placeholder="Email address"
             aria-label="Email address"
             value={formData.email}
+            onChange={handleChange}
+            required
+          />
+          <input
+            type="tel"
+            name="phone"
+            placeholder="Phone number"
+            aria-label="Phone number"
+            value={formData.phone}
             onChange={handleChange}
             required
           />
