@@ -27,3 +27,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Assignment / data collection (local only; not part of app source)
+2_data_collection/
