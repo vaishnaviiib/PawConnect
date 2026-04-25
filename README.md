@@ -18,6 +18,8 @@ JWT_SECRET=your_long_random_secret
 PORT=5000
 ```
 
+`PORT` is read by both **Express** (`server.js`) and **Vite’s dev proxy** ([`vite.config.js`](vite.config.js)). If you change `PORT`, keep `.env` loaded before starting the client so the proxy matches the API.
+
 Optional for the client when not using the Vite dev proxy:
 
 ```
@@ -28,10 +30,10 @@ VITE_API_URL=http://127.0.0.1:5000
 
 Use two terminals from the repo root after `npm install`:
 
-1. **API:** `npm run dev:server` — serves on `http://127.0.0.1:5000` by default.
-2. **Client:** `npm run dev:client` — Vite dev server with a proxy to the API so the browser can call `/auth`, `/dogs`, and `/applications` on the same origin.
+1. **API:** `npm run dev:server` — listens on `PORT` from `.env` (default **5000**).
+2. **Client:** `npm run dev:client` — Vite proxies `/auth`, `/dogs`, and `/applications` to `http://127.0.0.1:${PORT}` using the same `.env`.
 
-**If the UI shows “Backend unavailable” or a generic API error after signup:** start the API first (step 1) and ensure `.env` has valid `MONGO_URI` and `JWT_SECRET`. The Vite proxy targets port **5000** by default ([`vite.config.js`](vite.config.js)).
+**If the UI shows “Backend unavailable” or HTTP 502 after the survey / on Browse:** the proxy cannot reach the API. Start the API (step 1), fix `MONGO_URI` / `JWT_SECRET` if the server exits, and ensure `PORT` in `.env` matches where Express is listening. A **502** from the dev client means nothing is accepting connections at that proxy target—not an application JSON error from Express.
 
 For production API only: `npm start`.
 
