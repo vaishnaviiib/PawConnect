@@ -56,12 +56,22 @@ const getErrorMessage = async (response) => {
 };
 
 const apiFetch = async (path, options = {}) => {
+  const { withAuth, ...fetchOptions } = options;
+  const headers = {
+    "Content-Type": "application/json",
+    ...(fetchOptions.headers || {}),
+  };
+
+  if (withAuth) {
+    const user = readJson(CURRENT_USER_KEY, null);
+    if (user?.token) {
+      headers.Authorization = `Bearer ${user.token}`;
+    }
+  }
+
   const response = await fetch(`${API_BASE_URL}${path}`, {
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.headers || {}),
-    },
-    ...options,
+    ...fetchOptions,
+    headers,
   });
 
   if (!response.ok) {
@@ -231,9 +241,7 @@ export const createDogProfile = async (dog) => {
 
     const payload = await apiFetch("/dogs", {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${currentUser.token}`,
-      },
+      withAuth: true,
       body: JSON.stringify({
         name: dog.name,
         breed: dog.breed,
@@ -374,18 +382,21 @@ export const submitDogInterest = async (dog) => {
       !isObjectId(String(dog.id)) ||
       !isObjectId(String(dog.shelterId))
     ) {
-      throw new Error("Backend application route requires userId, dogId, and shelterId.");
+      throw new Error("Backend application requires Mongo ids for your account, dog, and shelter.");
+    }
+
+    if (!currentUser.token) {
+      throw new Error("No backend token. Sign up again with the API running or use local demo data.");
     }
 
     const payload = await apiFetch("/applications", {
       method: "POST",
+      withAuth: true,
       body: JSON.stringify({
-        userId: currentUser._id,
         dogId: String(dog.id),
-        shelterId: String(dog.shelterId),
         applicantName: currentUser.name,
         email: currentUser.email,
-        phone: generalApplication.phone,
+        phone: generalApplication.phone || "",
         applicationType:
           dog.adoptionType && dog.adoptionType !== "Both" ? dog.adoptionType : "Adoption",
         household: generalApplication.householdSize,
@@ -429,11 +440,11 @@ export const getApplicationsForUser = async () => {
       throw new Error("Backend applications route requires a valid user id.");
     }
 
-    const query =
-      currentUser.role === "shelter"
-        ? `/applications?shelterId=${encodeURIComponent(currentUser._id)}`
-        : `/applications?userId=${encodeURIComponent(currentUser._id)}`;
-    const payload = await apiFetch(query);
+    if (!currentUser?.token) {
+      throw new Error("No backend token. Sign up with the API running to load server applications.");
+    }
+
+    const payload = await apiFetch("/applications", { withAuth: true });
     const apiApplications = Array.isArray(payload.data)
       ? payload.data.map((application) => normalizeApplication({ ...application, source: "api" }))
       : [];
@@ -462,8 +473,14 @@ export const updateApplicationStatus = async (applicationId, status) => {
       throw new Error("Backend application update requires a valid application id.");
     }
 
+    const user = getCurrentUser();
+    if (!user?.token) {
+      throw new Error("No backend token. Sign in as a shelter user with the API running.");
+    }
+
     const payload = await apiFetch(`/applications/${applicationId}`, {
       method: "PATCH",
+      withAuth: true,
       body: JSON.stringify({
         status: status === "Declined" ? "Rejected" : status,
       }),
