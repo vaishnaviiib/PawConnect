@@ -1,20 +1,11 @@
 .review-applications-page {
-  min-height: 100vh;
+  min-height: 100%;
   background: #dce7f6;
   padding: 24px 16px 40px;
 }
 
 .review-applications-shell {
-  max-width: 420px;
-  margin: 0 auto;
-}
-
-.review-applications-status {
-  display: flex;
-  justify-content: space-between;
-  font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 18px;
+  width: 100%;
 }
 
 .review-applications-header {

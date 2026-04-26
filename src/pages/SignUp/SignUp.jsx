@@ -78,8 +78,8 @@ function SignUp() {
           <span>LTE 100%</span>
         </div>
 
-        <div className="flower-left" aria-hidden="true">x</div>
-        <div className="cloud-right" aria-hidden="true">o</div>
+        <div className="flower-left" aria-hidden="true">✿</div>
+        <div className="cloud-right" aria-hidden="true">☁</div>
 
         <h1 className="app-title">PawConnect</h1>
         <h2 className="signup-title" id="signup-title">

@@ -8,20 +8,10 @@ body {
 }
 
 .notifications-page {
-  min-height: 100vh;
+  min-height: 100%;
   background: #dfeaf3;
   padding: 16px 16px 90px;
   position: relative;
-}
-
-.notifications-status-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 24px;
-  
 }
 
 .notifications-title {
@@ -146,21 +136,6 @@ body {
 .dog-bottom {
   left: 18px;
   bottom: 95px;
-}
-
-.bottom-nav {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  background: #f4f4f4;
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  padding: 14px 0;
-  font-size: 22px;
-  border-top-left-radius: 18px;
-  border-top-right-radius: 18px;
 }
 
 .bell-active {

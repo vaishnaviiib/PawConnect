@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./BrowseDogs.css";
 import BottomNav from "../../components/BottomNav/BottomNav";
+import PhoneLayout from "../../components/PhoneLayout/PhoneLayout";
 import { getDogs } from "../../lib/pawApi";
 
 function BrowseDogs() {
@@ -134,191 +135,192 @@ function BrowseDogs() {
   };
 
   return (
-    <div className="browse-page">
-      <div className="browse-status-bar">
-        <span>9:41</span>
-        <span>Network</span>
-      </div>
-
-      <div className="browse-tabs">
-        <button
-          className={`browse-tab-button ${showFilters ? "browse-tab-active" : ""}`}
-          onClick={() => setShowFilters((prev) => !prev)}
-        >
-          Filter
-        </button>
-
-        <button
-          className={`browse-tab-button ${selectedTab === "forYou" ? "browse-tab-active" : ""}`}
-          onClick={() => {
-            setSelectedTab("forYou");
-            setCurrentIndex(0);
-          }}
-        >
-          For you
-        </button>
-
-        <button
-          className={`browse-tab-button ${selectedTab === "favorites" ? "browse-tab-active" : ""}`}
-          onClick={() => setSelectedTab("favorites")}
-        >
-          Favorites
-        </button>
-      </div>
-
-      {showFilters && (
-        <div className="filter-panel">
-          <h3>Filters</h3>
-
-          <label>Breed</label>
-          <select
-            value={selectedBreed}
-            onChange={(event) => setSelectedBreed(event.target.value)}
+    <PhoneLayout>
+      <div className="browse-page">
+        <div className="browse-tabs">
+          <button
+            className={`browse-tab-button ${showFilters ? "browse-tab-active" : ""}`}
+            onClick={() => setShowFilters((prev) => !prev)}
           >
-            {breedOptions.map((breed) => (
-              <option key={breed} value={breed}>
-                {breed}
-              </option>
-            ))}
-          </select>
+            Filter
+          </button>
 
-          <label>Age</label>
-          <select
-            value={selectedAge}
-            onChange={(event) => setSelectedAge(event.target.value)}
+          <button
+            className={`browse-tab-button ${selectedTab === "forYou" ? "browse-tab-active" : ""}`}
+            onClick={() => {
+              setSelectedTab("forYou");
+              setCurrentIndex(0);
+            }}
           >
-            <option value="All">All</option>
-            <option value="0-2">0-2 years</option>
-            <option value="3-5">3-5 years</option>
-            <option value="6+">6+ years</option>
-          </select>
+            For you
+          </button>
 
-          <label>Location</label>
-          <select
-            value={selectedLocation}
-            onChange={(event) => setSelectedLocation(event.target.value)}
+          <button
+            className={`browse-tab-button ${selectedTab === "favorites" ? "browse-tab-active" : ""}`}
+            onClick={() => setSelectedTab("favorites")}
           >
-            {locationOptions.map((location) => (
-              <option key={location} value={location}>
-                {location}
-              </option>
-            ))}
-          </select>
-
-          <div className="filter-actions">
-            <button className="filter-clear-btn" onClick={clearFilters}>
-              Clear
-            </button>
-            <button className="filter-apply-btn" onClick={applyFilters}>
-              Apply
-            </button>
-          </div>
+            Favorites
+          </button>
         </div>
-      )}
 
-      {selectedTab === "forYou" && (
-        <>
-          {isLoading ? (
-            <div className="no-dogs-message">
-              <h2>Loading dogs...</h2>
-              <p>Fetching the latest listings from PawConnect.</p>
+        {showFilters && (
+          <div className="filter-panel">
+            <h3>Filters</h3>
+
+            <label>Breed</label>
+            <select
+              value={selectedBreed}
+              onChange={(event) => setSelectedBreed(event.target.value)}
+            >
+              {breedOptions.map((breed) => (
+                <option key={breed} value={breed}>
+                  {breed}
+                </option>
+              ))}
+            </select>
+
+            <label>Age</label>
+            <select
+              value={selectedAge}
+              onChange={(event) => setSelectedAge(event.target.value)}
+            >
+              <option value="All">All</option>
+              <option value="0-2">0-2 years</option>
+              <option value="3-5">3-5 years</option>
+              <option value="6+">6+ years</option>
+            </select>
+
+            <label>Location</label>
+            <select
+              value={selectedLocation}
+              onChange={(event) => setSelectedLocation(event.target.value)}
+            >
+              {locationOptions.map((location) => (
+                <option key={location} value={location}>
+                  {location}
+                </option>
+              ))}
+            </select>
+
+            <div className="filter-actions">
+              <button className="filter-clear-btn" onClick={clearFilters}>
+                Clear
+              </button>
+              <button className="filter-apply-btn" onClick={applyFilters}>
+                Apply
+              </button>
             </div>
-          ) : null}
+          </div>
+        )}
 
-          {!isLoading ? (
-            <div className="no-dogs-message">
-              <p>
-                {dataSource === "api"
-                  ? "Showing live dog listings from the backend."
-                  : "Backend unavailable, showing sample dogs."}
-              </p>
-              {loadError ? <p>{loadError}</p> : null}
-            </div>
-          ) : null}
-
-          {!isLoading && currentDog ? (
-            <div className="dog-card">
-              <div className="dog-image-wrapper" onClick={handleCardClick}>
-                <img
-                  src={currentDog.image}
-                  alt={currentDog.name}
-                  className="dog-image"
-                />
-                <div className="dog-decor dog-heart">*</div>
-                <div className="dog-decor dog-crown">+</div>
-                <div className="dog-decor dog-swirl">o</div>
+        {selectedTab === "forYou" && (
+          <>
+            {isLoading ? (
+              <div className="no-dogs-message">
+                <h2>Loading dogs...</h2>
+                <p>Fetching the latest listings from PawConnect.</p>
               </div>
+            ) : null}
 
-              <div className="dog-details" onClick={handleCardClick}>
-                <h2>
-                  {currentDog.name} - {currentDog.age} yrs
-                </h2>
-
-                <div className="dog-location-info">
-                  <p>{currentDog.location}</p>
-                  {currentDog.distance ? <p>{currentDog.distance}</p> : null}
-                </div>
+            {!isLoading ? (
+              <div className="no-dogs-message">
+                <p>
+                  {dataSource === "api"
+                    ? "Showing live dog listings from the backend."
+                    : "Backend unavailable, showing sample dogs."}
+                </p>
+                {loadError ? <p>{loadError}</p> : null}
               </div>
+            ) : null}
 
-              <div className="dog-actions">
-                <button className="dog-action-btn skip-btn" onClick={handleSkip}>
-                  X
-                </button>
-                <button className="dog-action-btn like-btn" onClick={handleLike}>
-                  ✔
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="no-dogs-message">
-              <h2>No matching dogs found</h2>
-              <p>Try changing your filters or check back later.</p>
-            </div>
-          )}
-        </>
-      )}
-
-      {selectedTab === "favorites" && (
-        <div className="favorites-list">
-          {favorites.length > 0 ? (
-            favorites.map((dog) => (
-              <div className="favorite-card" key={dog.id}>
-                <div
-                  className="favorite-card-left"
-                  onClick={() => handleFavoriteClick(dog.id)}
-                >
+            {!isLoading && currentDog ? (
+              <div className="dog-card">
+                <div className="dog-image-wrapper" onClick={handleCardClick}>
                   <img
-                    src={dog.image}
-                    alt={dog.name}
-                    className="favorite-image"
+                    src={currentDog.image}
+                    alt={currentDog.name}
+                    className="dog-image"
                   />
+                  <div className="dog-decor dog-heart">*</div>
+                  <div className="dog-decor dog-crown">+</div>
+                  <div className="dog-decor dog-swirl">o</div>
+                </div>
 
-                  <div className="favorite-info">
-                    <h3>{dog.name}</h3>
-                    <p>{dog.breed}</p>
-                    <p>{dog.location}</p>
+                <div className="dog-details" onClick={handleCardClick}>
+                  <h2>
+                    {currentDog.name} - {currentDog.age} yrs
+                  </h2>
+
+                  <div className="dog-location-info">
+                    <p>{currentDog.location}</p>
+                    {currentDog.distance ? <p>{currentDog.distance}</p> : null}
                   </div>
                 </div>
 
-                <button
-                  className="remove-favorite-btn"
-                  onClick={() => removeFavorite(dog.id)}
-                >
-                  X
-                </button>
+                <div className="dog-actions">
+                  <button className="dog-action-btn skip-btn" onClick={handleSkip}>
+                    X
+                  </button>
+                  <button className="dog-action-btn like-btn" onClick={handleLike}>
+                    Like
+                  </button>
+                </div>
               </div>
-            ))
-          ) : (
-            <div className="no-dogs-message">
-              <h2>No favorites yet</h2>
-              <p>Save a dog to keep it here.</p>
-            </div>
-          )}
-        </div>
-      )}
+            ) : null}
 
-      <BottomNav />
-    </div>
+            {!isLoading && !currentDog ? (
+              <div className="no-dogs-message">
+                <h2>No matching dogs found</h2>
+                <p>Try changing your filters or check back later.</p>
+              </div>
+            ) : null}
+          </>
+        )}
+
+        {selectedTab === "favorites" && (
+          <div
+            className={`favorites-list ${favorites.length === 0 ? "favorites-list-empty" : ""}`}
+          >
+            {favorites.length > 0 ? (
+              favorites.map((dog) => (
+                <div className="favorite-card" key={dog.id}>
+                  <div
+                    className="favorite-card-left"
+                    onClick={() => handleFavoriteClick(dog.id)}
+                  >
+                    <img
+                      src={dog.image}
+                      alt={dog.name}
+                      className="favorite-image"
+                    />
+
+                    <div className="favorite-info">
+                      <h3>{dog.name}</h3>
+                      <p>{dog.breed}</p>
+                      <p>{dog.location}</p>
+                    </div>
+                  </div>
+
+                  <button
+                    className="remove-favorite-btn"
+                    onClick={() => removeFavorite(dog.id)}
+                  >
+                    X
+                  </button>
+                </div>
+              ))
+            ) : (
+              <div className="no-dogs-message">
+                <h2>No favorites yet</h2>
+                <p>Save a dog to keep it here.</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        <BottomNav />
+      </div>
+    </PhoneLayout>
   );
 }
 

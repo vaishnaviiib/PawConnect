@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./CreateDogProfile.css";
+import PhoneLayout from "../../components/PhoneLayout/PhoneLayout";
 import shelterDogs from "../../mockData/shelterDogs";
 import { createDogProfile } from "../../lib/pawApi";
 
@@ -93,95 +94,92 @@ function CreateDogProfile() {
   };
 
   return (
-    <main className="create-dog-page">
-      <section className="create-dog-shell">
-        <div className="create-dog-status">
-          <span>9:41</span>
-          <span>Draft Mode</span>
-        </div>
+    <PhoneLayout>
+      <main className="create-dog-page">
+        <section className="create-dog-shell">
+          <header className="create-dog-header">
+            <h1>Create Dog Profile</h1>
+            <p>Use this mock form to preview how a new listing will feel for shelter staff.</p>
+          </header>
 
-        <header className="create-dog-header">
-          <h1>Create Dog Profile</h1>
-          <p>Use this mock form to preview how a new listing will feel for shelter staff.</p>
-        </header>
-
-        <form className="create-dog-form" onSubmit={handleSaveMockProfile}>
-          <input type="text" name="name" placeholder="Dog name" defaultValue="Poppy" />
-          <input
-            type="text"
-            name="breed"
-            placeholder="Breed"
-            defaultValue="Australian Shepherd Mix"
-          />
-          <div className="create-dog-grid">
-            <input type="number" name="age" placeholder="Age" defaultValue="2" />
-            <select name="size" defaultValue="Medium">
-              <option>Small</option>
-              <option>Medium</option>
-              <option>Large</option>
-            </select>
-          </div>
-          <input type="text" name="location" placeholder="Location" defaultValue="Addison, TX" />
-          <select name="adoptionType" defaultValue="Both">
-            <option>Adoption</option>
-            <option>Foster</option>
-            <option>Both</option>
-          </select>
-          <textarea
-            name="description"
-            rows="4"
-            placeholder="Short description"
-            defaultValue="Poppy is cheerful, quick to warm up, and happiest after a game of fetch."
-          />
-          <textarea
-            name="healthInfo"
-            rows="3"
-            placeholder="Health and care notes"
-            defaultValue="Spayed, vaccinated, and comfortable with gentle introductions."
-          />
-
-          <section className="create-dog-upload-panel">
-            <div className="create-dog-upload-copy">
-              <h2>Dog photos</h2>
-              <p>{previewCountLabel}</p>
+          <form className="create-dog-form" onSubmit={handleSaveMockProfile}>
+            <input type="text" name="name" placeholder="Dog name" defaultValue="Poppy" />
+            <input
+              type="text"
+              name="breed"
+              placeholder="Breed"
+              defaultValue="Australian Shepherd Mix"
+            />
+            <div className="create-dog-grid">
+              <input type="number" name="age" placeholder="Age" defaultValue="2" />
+              <select name="size" defaultValue="Medium">
+                <option>Small</option>
+                <option>Medium</option>
+                <option>Large</option>
+              </select>
             </div>
+            <input type="text" name="location" placeholder="Location" defaultValue="Addison, TX" />
+            <select name="adoptionType" defaultValue="Both">
+              <option>Adoption</option>
+              <option>Foster</option>
+              <option>Both</option>
+            </select>
+            <textarea
+              name="description"
+              rows="4"
+              placeholder="Short description"
+              defaultValue="Poppy is cheerful, quick to warm up, and happiest after a game of fetch."
+            />
+            <textarea
+              name="healthInfo"
+              rows="3"
+              placeholder="Health and care notes"
+              defaultValue="Spayed, vaccinated, and comfortable with gentle introductions."
+            />
 
-            <label className="create-dog-upload-field">
-              <span>Select photos</span>
-              <input
-                type="file"
-                accept=".jpg,.jpeg,.png,.webp"
-                multiple
-                onChange={handlePhotoSelection}
-              />
-            </label>
-
-            {photoPreviews.length > 0 ? (
-              <div className="create-dog-photo-grid">
-                {photoPreviews.map((photo) => (
-                  <article key={photo.id} className="create-dog-photo-card">
-                    <img src={photo.previewUrl} alt={photo.name} />
-                    <div className="create-dog-photo-meta">
-                      <p>{photo.name}</p>
-                      <button type="button" onClick={() => handleRemovePhoto(photo.id)}>
-                        Remove
-                      </button>
-                    </div>
-                  </article>
-                ))}
+            <section className="create-dog-upload-panel">
+              <div className="create-dog-upload-copy">
+                <h2>Dog photos</h2>
+                <p>{previewCountLabel}</p>
               </div>
-            ) : null}
-          </section>
 
-          <button type="submit">Save mock profile</button>
-          {status ? <p className="create-dog-inline-status">{status}</p> : null}
-        </form>
+              <label className="create-dog-upload-field">
+                <span>Select photos</span>
+                <input
+                  type="file"
+                  accept=".jpg,.jpeg,.png,.webp"
+                  multiple
+                  onChange={handlePhotoSelection}
+                />
+              </label>
 
-        <section className="create-dog-preview">
-          
+              {photoPreviews.length > 0 ? (
+                <div className="create-dog-photo-grid">
+                  {photoPreviews.map((photo) => (
+                    <article key={photo.id} className="create-dog-photo-card">
+                      <img src={photo.previewUrl} alt={photo.name} />
+                      <div className="create-dog-photo-meta">
+                        <p>{photo.name}</p>
+                        <button type="button" onClick={() => handleRemovePhoto(photo.id)}>
+                          Remove
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              ) : null}
+            </section>
+
+            <button type="submit" disabled={isSaving}>
+              {isSaving ? "Saving..." : "Save mock profile"}
+            </button>
+            {status ? <p className="create-dog-inline-status">{status}</p> : null}
+          </form>
+
+          <section className="create-dog-preview"></section>
         </section>
-      </section>
-    </main>
+      </main>
+    </PhoneLayout>
   );
 }
 

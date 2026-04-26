@@ -1,20 +1,11 @@
 .create-dog-page {
-  min-height: 100vh;
+  min-height: 100%;
   background: #e8dceb;
   padding: 24px 16px 40px;
 }
 
 .create-dog-shell {
-  max-width: 420px;
-  margin: 0 auto;
-}
-
-.create-dog-status {
-  display: flex;
-  justify-content: space-between;
-  font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 18px;
+  width: 100%;
 }
 
 .create-dog-header,
@@ -32,7 +23,7 @@
 .create-dog-upload-copy h2 {
   margin: 0 0 8px;
   color: #24152a;
-  font-size: 40px;
+  font-size: 36px;
 }
 
 .create-dog-header p,

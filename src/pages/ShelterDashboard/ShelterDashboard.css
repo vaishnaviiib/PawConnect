@@ -1,21 +1,11 @@
 .shelter-dashboard-page {
-  min-height: 100vh;
+  min-height: 100%;
   background: #f7f0c8;
   padding: 24px 16px 40px;
 }
 
 .shelter-dashboard-shell {
-  max-width: 420px;
-  margin: 0 auto;
-}
-
-.shelter-dashboard-status {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 18px;
+  width: 100%;
 }
 
 .shelter-dashboard-hero {

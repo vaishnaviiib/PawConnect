@@ -1,20 +1,11 @@
 .manage-appointments-page {
-  min-height: 100vh;
+  min-height: 100%;
   background: #dfead8;
   padding: 24px 16px 40px;
 }
 
 .manage-appointments-shell {
-  max-width: 420px;
-  margin: 0 auto;
-}
-
-.manage-appointments-status {
-  display: flex;
-  justify-content: space-between;
-  font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 18px;
+  width: 100%;
 }
 
 .manage-appointments-header {

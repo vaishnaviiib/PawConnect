@@ -1,0 +1,51 @@
+.phone-layout-screen {
+  min-height: 100vh;
+  padding: 0 16px;
+  background: #f5eef4;
+  display: flex;
+  justify-content: center;
+}
+
+.phone-layout-device {
+  width: 100%;
+  max-width: 430px;
+  min-height: 900px;
+  height: 100vh;
+  margin: 0 auto;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: #fffdf8;
+  box-shadow: 0 24px 60px rgba(83, 65, 91, 0.16);
+  border-radius: 32px 32px 0 0;
+  overflow: hidden;
+}
+
+.phone-layout-status-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 22px 10px;
+  background: rgba(255, 255, 255, 0.78);
+  font-size: 14px;
+  font-weight: 700;
+  color: #2b2331;
+}
+
+.phone-layout-content {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+@media (max-width: 480px) {
+  .phone-layout-screen {
+    padding: 0;
+  }
+
+  .phone-layout-device {
+    width: 100%;
+    border-radius: 0;
+    box-shadow: none;
+  }
+}
