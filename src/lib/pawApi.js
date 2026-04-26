@@ -1,5 +1,6 @@
 import mockDogs from "../mockData/dogs.js";
 
+// Centralizes API and local-storage behavior so the UI can work online or offline.
 const API_BASE_URL = "http://127.0.0.1:5000";
 const CURRENT_USER_KEY = "pawconnectCurrentUser";
 const GENERAL_APPLICATION_KEY = "pawconnectGeneralApplication";
@@ -7,10 +8,13 @@ const SUBMITTED_APPLICATIONS_KEY = "pawconnectSubmittedApplications";
 const SHELTER_DOGS_KEY = "pawconnectShelterDogs";
 const APPOINTMENTS_KEY = "pawconnectAppointments";
 
+// Guards local helper logic that expects plain objects.
 const isObject = (value) => typeof value === "object" && value !== null;
 
+// Checks whether a value looks like a Mongo-style object id before API calls.
 const isObjectId = (value) => typeof value === "string" && /^[a-f0-9]{24}$/i.test(value);
 
+// Reads JSON data from local storage and falls back safely on parse failure.
 const readJson = (key, fallback) => {
   try {
     const value = localStorage.getItem(key);
@@ -20,10 +24,12 @@ const readJson = (key, fallback) => {
   }
 };
 
+// Persists structured data in local storage under a stable key.
 const writeJson = (key, value) => {
   localStorage.setItem(key, JSON.stringify(value));
 };
 
+// Normalizes backend error payloads into a single message string.
 const getErrorMessage = async (response) => {
   try {
     const payload = await response.json();
@@ -33,6 +39,7 @@ const getErrorMessage = async (response) => {
   }
 };
 
+// Wraps fetch with the app's API base URL and shared JSON handling.
 const apiFetch = async (path, options = {}) => {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     headers: {
@@ -49,6 +56,7 @@ const apiFetch = async (path, options = {}) => {
   return response.json();
 };
 
+// Converts backend or mock dog data into the shape expected by the UI.
 const normalizeDog = (dog) => {
   const firstPhoto =
     Array.isArray(dog.photos) && dog.photos.length > 0
@@ -77,6 +85,7 @@ const normalizeDog = (dog) => {
   };
 };
 
+// Aligns application records from different sources into one frontend model.
 const normalizeApplication = (application) => {
   const populatedDog = isObject(application.dogId) ? application.dogId : null;
 
@@ -104,6 +113,7 @@ const normalizeApplication = (application) => {
   };
 };
 
+// Standardizes appointment records for the shelter scheduling screens.
 const normalizeAppointment = (appointment) => ({
   id: appointment.id || `appointment-${Date.now()}`,
   applicationId: appointment.applicationId || "",
@@ -116,6 +126,7 @@ const normalizeAppointment = (appointment) => ({
   dogImage: appointment.dogImage || mockDogs[0].image,
 });
 
+// Deduplicates merged lists by id while preserving the latest matching entry.
 const mergeById = (items) => {
   const seen = new Map();
   items.forEach((item) => {
@@ -126,10 +137,12 @@ const mergeById = (items) => {
 
 export const getCurrentUser = () => readJson(CURRENT_USER_KEY, null);
 
+// Saves the currently signed-in demo user for later screens.
 export const saveCurrentUser = (value) => {
   writeJson(CURRENT_USER_KEY, value);
 };
 
+// Attempts backend registration, then falls back to a local-only demo account.
 export const registerUser = async ({ name, email, password, role }) => {
   try {
     const payload = await apiFetch("/auth/register", {
@@ -176,6 +189,7 @@ export const registerUser = async ({ name, email, password, role }) => {
   }
 };
 
+// Stores the adopter's reusable application answers for later submissions.
 export const saveGeneralApplication = (application) => {
   writeJson(GENERAL_APPLICATION_KEY, {
     ...application,
@@ -185,13 +199,16 @@ export const saveGeneralApplication = (application) => {
 
 export const getGeneralApplication = () => readJson(GENERAL_APPLICATION_KEY, null);
 
+// Reads any shelter-created dogs that were saved locally in the browser.
 export const getLocalShelterDogs = () => readJson(SHELTER_DOGS_KEY, []).map(normalizeDog);
 
+// Prepends a locally created shelter dog so it appears immediately in the UI.
 export const saveLocalShelterDog = (dog) => {
   const existingDogs = getLocalShelterDogs();
   writeJson(SHELTER_DOGS_KEY, [normalizeDog(dog), ...existingDogs]);
 };
 
+// Creates a dog profile through the backend when possible, with local fallback.
 export const createDogProfile = async (dog) => {
   const currentUser = getCurrentUser();
   const localDog = normalizeDog({
@@ -251,6 +268,7 @@ export const createDogProfile = async (dog) => {
   }
 };
 
+// Loads dogs from the backend and merges them with any locally created listings.
 export const getDogs = async () => {
   const localDogs = getLocalShelterDogs();
 
@@ -274,6 +292,7 @@ export const getDogs = async () => {
   }
 };
 
+// Finds a single dog, preferring local creations before backend or mock data.
 export const getDogById = async (id) => {
   const localDog = getLocalShelterDogs().find((dog) => String(dog.id) === String(id));
 
@@ -305,10 +324,12 @@ export const getDogById = async (id) => {
 export const getSubmittedApplications = () =>
   readJson(SUBMITTED_APPLICATIONS_KEY, []).map(normalizeApplication);
 
+// Persists the normalized application list used by adopter and shelter flows.
 const saveSubmittedApplications = (applications) => {
   writeJson(SUBMITTED_APPLICATIONS_KEY, applications.map(normalizeApplication));
 };
 
+// Creates a dog-specific application using the saved general application answers.
 export const submitDogInterest = async (dog) => {
   const currentUser = getCurrentUser();
   const generalApplication = getGeneralApplication();
@@ -397,6 +418,7 @@ export const submitDogInterest = async (dog) => {
   }
 };
 
+// Retrieves application data for the current user or shelter, with local fallback.
 export const getApplicationsForUser = async () => {
   const currentUser = getCurrentUser();
   const localApplications = getSubmittedApplications();
@@ -429,6 +451,7 @@ export const getApplicationsForUser = async () => {
   }
 };
 
+// Updates application review status and mirrors the change locally if needed.
 export const updateApplicationStatus = async (applicationId, status) => {
   try {
     if (!["Approved", "Declined"].includes(status)) {
@@ -462,8 +485,10 @@ export const updateApplicationStatus = async (applicationId, status) => {
   }
 };
 
+// Returns saved shelter visits in a consistent appointment shape.
 export const getAppointments = () => readJson(APPOINTMENTS_KEY, []).map(normalizeAppointment);
 
+// Creates a visit appointment and marks the related application accordingly.
 export const scheduleVisit = ({ applicationId, date, time }) => {
   const application = getSubmittedApplications().find((item) => item.id === applicationId);
 
@@ -494,6 +519,7 @@ export const scheduleVisit = ({ applicationId, date, time }) => {
   return nextAppointment;
 };
 
+// Builds notification items from saved application activity.
 export const getApplicationNotifications = () => {
   return getSubmittedApplications().map((application) => ({
     id: application.id,
@@ -507,6 +533,7 @@ export const getApplicationNotifications = () => {
   }));
 };
 
+// Builds notification items from scheduled shelter visits.
 export const getVisitNotifications = () => {
   return getAppointments().map((appointment) => ({
     id: appointment.id,

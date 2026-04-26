@@ -16,6 +16,7 @@ import {
   updateApplicationStatus,
 } from "../../src/lib/pawApi.js";
 
+// Minimal in-memory localStorage replacement for Node-based frontend tests.
 class MemoryStorage {
   constructor() {
     this.store = new Map();
@@ -40,16 +41,19 @@ class MemoryStorage {
 
 const originalFetch = global.fetch;
 
+// Resets browser storage state between test cases.
 const mockStorage = () => {
   global.localStorage = new MemoryStorage();
 };
 
+// Forces the data layer down its local fallback paths.
 const useOfflineFetch = () => {
   global.fetch = async () => {
     throw new Error("Network unavailable during test.");
   };
 };
 
+// Seeds a shelter user for create-dog and shelter dashboard scenarios.
 const saveShelterUser = () => {
   saveCurrentUser({
     _id: "local-shelter-1",
@@ -60,6 +64,7 @@ const saveShelterUser = () => {
   });
 };
 
+// Seeds an adopter user for interest submission scenarios.
 const saveAdopterUser = () => {
   saveCurrentUser({
     _id: "local-adopter-1",
@@ -70,6 +75,7 @@ const saveAdopterUser = () => {
   });
 };
 
+// Seeds the reusable application answers required before expressing interest.
 const saveDemoApplication = () => {
   saveGeneralApplication({
     applicantName: "Taylor Johnson",
@@ -85,6 +91,7 @@ const saveDemoApplication = () => {
   });
 };
 
+// Creates a fully local dog-interest record for follow-up tests.
 const createLocalInterest = async () => {
   saveAdopterUser();
   saveDemoApplication();
@@ -100,11 +107,13 @@ const createLocalInterest = async () => {
   });
 };
 
+// Each test starts with clean storage and forced offline behavior.
 beforeEach(() => {
   mockStorage();
   useOfflineFetch();
 });
 
+// Restores fetch so the test environment remains clean after each case.
 afterEach(() => {
   if (originalFetch) {
     global.fetch = originalFetch;
@@ -113,6 +122,7 @@ afterEach(() => {
   }
 });
 
+// Verifies shelter-created dogs persist locally when backend writes are unavailable.
 test("createDogProfile saves a shelter dog locally when no backend token is available", async () => {
   saveShelterUser();
 
@@ -140,6 +150,7 @@ test("createDogProfile saves a shelter dog locally when no backend token is avai
   assert.equal(savedDogs[0].status, "Draft");
 });
 
+// Verifies adopter interest submissions are saved as local applications.
 test("submitDogInterest stores a local application for the adopter workflow", async () => {
   const result = await createLocalInterest();
   const savedApplications = getSubmittedApplications();
@@ -153,6 +164,7 @@ test("submitDogInterest stores a local application for the adopter workflow", as
   assert.match(savedApplications[0].notes, /123 Main St/);
 });
 
+// Verifies local review actions still work when API synchronization fails.
 test("updateApplicationStatus updates the locally saved application when API sync is unavailable", async () => {
   await createLocalInterest();
   const [application] = getSubmittedApplications();
@@ -163,6 +175,7 @@ test("updateApplicationStatus updates the locally saved application when API syn
   assert.equal(getSubmittedApplications()[0].status, "Approved");
 });
 
+// Verifies scheduled visits create appointment records and update application state.
 test("scheduleVisit creates an appointment and marks the application as visit scheduled", async () => {
   await createLocalInterest();
   const [application] = getSubmittedApplications();
@@ -180,6 +193,7 @@ test("scheduleVisit creates an appointment and marks the application as visit sc
   assert.equal(getSubmittedApplications()[0].status, "Visit Scheduled");
 });
 
+// Verifies application queries fall back to frontend state for non-backend demo users.
 test("getApplicationsForUser returns saved frontend applications when the backend user id is invalid", async () => {
   await createLocalInterest();
 
@@ -190,6 +204,7 @@ test("getApplicationsForUser returns saved frontend applications when the backen
   assert.match(result.error, /valid user id/i);
 });
 
+// Verifies the browse feed merges local shelter dogs with bundled mock listings.
 test("getDogs merges locally created dogs with mock data when the API is unavailable", async () => {
   saveShelterUser();
   await createDogProfile({
@@ -214,6 +229,7 @@ test("getDogs merges locally created dogs with mock data when the API is unavail
   assert.ok(result.dogs.some((dog) => dog.name === "Max"));
 });
 
+// Verifies notification helpers reflect recently saved application and visit activity.
 test("notification helpers reflect saved application and visit activity", async () => {
   await createLocalInterest();
   const [application] = getSubmittedApplications();

@@ -1,3 +1,4 @@
+// Seed application summaries for early UI prototyping.
 const applications = [
   {
     id: 1,

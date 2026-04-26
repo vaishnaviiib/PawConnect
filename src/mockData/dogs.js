@@ -1,3 +1,4 @@
+// Seed dog cards used when the live backend is unavailable.
 const dogs = [
   {
     id: 1,

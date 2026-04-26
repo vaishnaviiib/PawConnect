@@ -8,6 +8,7 @@ import {
   updateApplicationStatus,
 } from "../../lib/pawApi";
 
+// Gives shelter staff a queue for reviewing applications and scheduling visits.
 function ReviewApplications() {
   const [localApplications, setLocalApplications] = useState([]);
   const [activeScheduleId, setActiveScheduleId] = useState("");
@@ -15,6 +16,7 @@ function ReviewApplications() {
   const [statusMessage, setStatusMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
+  // Loads saved applications and reshapes them to match the seeded review cards.
   useEffect(() => {
     let isMounted = true;
 
@@ -55,11 +57,13 @@ function ReviewApplications() {
     };
   }, []);
 
+  // Appends static mock data so the review list stays populated during the demo.
   const combinedApplications = [
     ...localApplications,
     ...shelterApplications.map((application) => ({ ...application, isLocal: false })),
   ];
 
+  // Applies an approval or decline change and refreshes the local review list.
   const handleStatusChange = (applicationId, status) => {
     const nextApplications = updateApplicationStatus(applicationId, status);
     setLocalApplications(
@@ -77,6 +81,7 @@ function ReviewApplications() {
     );
   };
 
+  // Creates a visit from the active draft and updates the application's status.
   const handleConfirmVisit = (applicationId) => {
     if (!scheduleDraft.date || !scheduleDraft.time) {
       return;
@@ -97,12 +102,14 @@ function ReviewApplications() {
     <PhoneLayout>
       <main className="review-applications-page">
         <section className="review-applications-shell">
+          {/* Header copy explains that this screen is still backed by mock-first data. */}
           <header className="review-applications-header">
             <h1>Review Applications</h1>
             <p>Sort through mock applicant profiles before wiring this page to the API.</p>
             {statusMessage ? <p>{statusMessage}</p> : null}
           </header>
 
+          {/* Each card shows quick review data plus optional scheduling controls. */}
           <div className="review-applications-list">
             {isLoading ? <article className="review-application-card">Loading applications...</article> : null}
             {combinedApplications.map((application) => (

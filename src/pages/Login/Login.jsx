@@ -1,5 +1,6 @@
 import "./Login.css";
 
+// Placeholder route reserved for a future dedicated login flow.
 function Login() {
   return (
     <section className="page-placeholder">

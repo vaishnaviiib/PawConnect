@@ -5,8 +5,10 @@ import PhoneLayout from "../../components/PhoneLayout/PhoneLayout";
 import shelterDogs from "../../mockData/shelterDogs";
 import { createDogProfile } from "../../lib/pawApi";
 
+// Limits uploads to the image formats expected by the demo profile form.
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
+// Lets shelter staff create a new dog profile with optional local photo previews.
 function CreateDogProfile() {
   const navigate = useNavigate();
   const recentDog = shelterDogs[0];
@@ -14,6 +16,7 @@ function CreateDogProfile() {
   const [status, setStatus] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
+  // Releases object URLs so repeated photo editing does not leak browser memory.
   useEffect(() => {
     return () => {
       photoPreviews.forEach((photo) => {
@@ -22,6 +25,7 @@ function CreateDogProfile() {
     };
   }, [photoPreviews]);
 
+  // Provides a short status label for the current preview gallery state.
   const previewCountLabel = useMemo(() => {
     if (photoPreviews.length === 0) {
       return "No photos selected yet";
@@ -30,6 +34,7 @@ function CreateDogProfile() {
     return `${photoPreviews.length} photo${photoPreviews.length === 1 ? "" : "s"} ready`;
   }, [photoPreviews]);
 
+  // Filters uploads to supported image types and stores preview metadata for each file.
   const handlePhotoSelection = (event) => {
     const selectedFiles = Array.from(event.target.files || []).filter((file) =>
       ACCEPTED_IMAGE_TYPES.includes(file.type)
@@ -46,6 +51,7 @@ function CreateDogProfile() {
     event.target.value = "";
   };
 
+  // Removes a previewed image and immediately revokes its object URL.
   const handleRemovePhoto = (photoId) => {
     setPhotoPreviews((prev) => {
       const nextPhotos = prev.filter((photo) => photo.id !== photoId);
@@ -59,6 +65,7 @@ function CreateDogProfile() {
     });
   };
 
+  // Builds the profile payload from form values and saves it through the shared data layer.
   const handleSaveMockProfile = async (event) => {
     event.preventDefault();
     setIsSaving(true);
@@ -97,6 +104,7 @@ function CreateDogProfile() {
     <PhoneLayout>
       <main className="create-dog-page">
         <section className="create-dog-shell">
+          {/* The form mirrors the inputs a shelter dashboard would eventually collect. */}
           <header className="create-dog-header">
             <h1>Create Dog Profile</h1>
             <p>Use this mock form to preview how a new listing will feel for shelter staff.</p>
@@ -137,6 +145,7 @@ function CreateDogProfile() {
               defaultValue="Spayed, vaccinated, and comfortable with gentle introductions."
             />
 
+            {/* Upload controls stay separate so photo state can be managed independently. */}
             <section className="create-dog-upload-panel">
               <div className="create-dog-upload-copy">
                 <h2>Dog photos</h2>
@@ -153,6 +162,7 @@ function CreateDogProfile() {
                 />
               </label>
 
+              {/* Preview cards show every selected photo before the profile is saved. */}
               {photoPreviews.length > 0 ? (
                 <div className="create-dog-photo-grid">
                   {photoPreviews.map((photo) => (

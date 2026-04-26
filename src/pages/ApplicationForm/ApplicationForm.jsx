@@ -5,6 +5,7 @@ import BottomNav from "../../components/BottomNav/BottomNav";
 import PhoneLayout from "../../components/PhoneLayout/PhoneLayout";
 import { getCurrentUser, saveGeneralApplication } from "../../lib/pawApi";
 
+// Saves the adopter's reusable household information before dog-specific interest.
 function ApplicationForm() {
   const navigate = useNavigate();
   const currentUser = getCurrentUser();
@@ -21,6 +22,7 @@ function ApplicationForm() {
   });
   const [status, setStatus] = useState("");
 
+  // Updates the matching form field without changing the rest of the draft.
   const handleChange = (event) => {
     const { name, value } = event.target;
     setFormData((prev) => ({
@@ -29,6 +31,7 @@ function ApplicationForm() {
     }));
   };
 
+  // Persists the general application locally and moves the user into browsing.
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -53,6 +56,7 @@ function ApplicationForm() {
     <PhoneLayout>
       <div className="application-page">
         <div className="application-container">
+          {/* This form is intentionally broad so it can be reused for multiple dogs. */}
           <h1 className="application-title">General Application</h1>
           <p className="application-subtitle">
             Complete this once so you can send your application to dogs you are interested in.

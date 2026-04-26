@@ -1,5 +1,6 @@
 import "./InputField.css";
 
+// Wraps a label and input so forms can share a consistent field pattern.
 function InputField({
   label = "Label",
   placeholder = "Enter text",

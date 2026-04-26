@@ -1,6 +1,7 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import "./BottomNav.css";
 
+// Renders the shared bottom navigation and highlights the active route.
 function BottomNav() {
   const navigate = useNavigate();
   const location = useLocation();

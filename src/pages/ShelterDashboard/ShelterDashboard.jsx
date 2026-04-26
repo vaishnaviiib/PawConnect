@@ -11,9 +11,11 @@ import {
   getSubmittedApplications,
 } from "../../lib/pawApi";
 
+// Summarizes shelter activity and links staff into the main management flows.
 function ShelterDashboard() {
   const savedDogs = useMemo(() => getLocalShelterDogs(), []);
 
+  // Combines seeded mock counts with locally created data for a fuller demo dashboard.
   const availableCount =
     shelterDogs.filter((dog) => dog.status === "Available").length + savedDogs.length;
   const reviewCount = shelterApplications.filter(
@@ -28,6 +30,7 @@ function ShelterDashboard() {
     <PhoneLayout>
       <main className="shelter-dashboard-page">
         <section className="shelter-dashboard-shell">
+          {/* Hero copy frames the shelter dashboard as an operational home base. */}
           <header className="shelter-dashboard-hero">
             <p className="shelter-dashboard-kicker">PawConnect Shelter</p>
             <h1>Lone Star Rescue</h1>
@@ -36,6 +39,7 @@ function ShelterDashboard() {
             </p>
           </header>
 
+          {/* High-level counts surface the shelter's current workload at a glance. */}
           <section className="shelter-dashboard-metrics">
             <article className="shelter-metric-card">
               <span className="shelter-metric-label">Available dogs</span>
@@ -51,6 +55,7 @@ function ShelterDashboard() {
             </article>
           </section>
 
+          {/* Action cards route staff into dog creation, review, and scheduling tasks. */}
           <nav className="shelter-dashboard-actions" aria-label="Shelter actions">
             <Link className="shelter-action-card" to="/create-dog">
               <span>Create dog profile</span>
@@ -66,6 +71,7 @@ function ShelterDashboard() {
             </Link>
           </nav>
 
+          {/* Locally created shelter dogs appear here alongside the dashboard summary. */}
           <section className="shelter-dashboard-section">
             <div className="shelter-section-heading">
               <h2>My Dog Listings</h2>

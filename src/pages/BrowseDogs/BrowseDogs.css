@@ -8,12 +8,26 @@ body {
 }
 
 .browse-page {
-  min-height: 100%;
+  width: 100%;
+  max-width: 390px;
+  min-height: 100vh;
   background: #e8dceb;
-  padding: 16px 16px 80px;
+  padding: 24px 28px 32px;
   position: relative;
   display: flex;
   flex-direction: column;
+  
+
+
+  /*width: 100%;
+  max-width: 390px;
+  min-height: 100vh;
+  padding: 24px 28px 32px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+*/
+
 }
 
 .browse-tabs {
@@ -134,7 +148,9 @@ body {
 
 .dog-heart {
   top: 14px;
-  left: 14px;
+  left: 45px;
+  color: #f4abcf;
+
 }
 
 .dog-crown {
@@ -144,7 +160,8 @@ body {
 
 .dog-swirl {
   bottom: 16px;
-  left: 14px;
+  left: 50px;
+  color: #f4abcf;
 }
 
 .dog-details {
@@ -183,12 +200,14 @@ body {
 }
 
 .no-dogs-message {
+  /*
   max-width: 380px;
   margin: 80px auto 0;
   background: #f2e5f2;
   border-radius: 24px;
   padding: 32px 24px;
   text-align: center;
+  */
 }
 
 .no-dogs-message h2 {
@@ -264,4 +283,14 @@ body {
   font-size: 26px;
   cursor: pointer;
   color: #000;
+}
+
+.phone-layout-device.browse-page {
+  background: #e8dceb !important;
+  border-radius: 36px;
+  overflow: hidden;
+}
+
+.phone-layout-device.browse-page .phone-layout-content {
+  background: #e8dceb !important;
 }

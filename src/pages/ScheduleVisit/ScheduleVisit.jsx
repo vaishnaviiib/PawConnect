@@ -1,5 +1,6 @@
 import "./ScheduleVisit.css";
 
+// Placeholder route reserved for a future standalone scheduling screen.
 function ScheduleVisit() {
   return (
     <section className="page-placeholder">

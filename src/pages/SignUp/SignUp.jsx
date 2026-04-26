@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { registerUser, saveCurrentUser } from "../../lib/pawApi";
 
+// Collects the first-run account details and routes users into the right flow.
 function SignUp() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -14,6 +15,7 @@ function SignUp() {
   const [status, setStatus] = useState({ type: "", message: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Keeps the controlled form state in sync with the active input field.
   const handleChange = (event) => {
     const { name, value } = event.target;
 
@@ -23,6 +25,7 @@ function SignUp() {
     }));
   };
 
+  // Registers the user, surfaces any fallback messaging, then routes onward.
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -73,6 +76,7 @@ function SignUp() {
   return (
     <main className="signup-screen">
       <section className="signup-container" aria-labelledby="signup-title">
+        {/* Decorative status chrome reinforces the mobile mockup. */}
         <div className="status-bar" aria-hidden="true">
           <span>9:41</span>
           <span>LTE 100%</span>
@@ -81,6 +85,7 @@ function SignUp() {
         <div className="flower-left" aria-hidden="true">✿</div>
         <div className="cloud-right" aria-hidden="true">☁</div>
 
+        {/* The form is the primary action on this opening screen. */}
         <h1 className="app-title">PawConnect</h1>
         <h2 className="signup-title" id="signup-title">
           Create your account
@@ -138,11 +143,13 @@ function SignUp() {
 
         {status.message ? <p className="terms-text">{status.message}</p> : null}
 
+        {/* Legal copy stays visible even when no status message is present. */}
         <p className="terms-text">
           By continuing, you agree to PawConnect&apos;s <span>Terms</span> and{" "}
           <span>Privacy Policy</span>.
         </p>
 
+        {/* Decorative pet illustration anchors the onboarding layout. */}
         <div className="pet-illustration" aria-hidden="true">
           <div className="pet-ear pet-ear-left" />
           <div className="pet-ear pet-ear-right" />
