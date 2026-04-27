@@ -1,11 +1,31 @@
-.review-applications-page {
-  min-height: 100%;
+.phone-layout-device.review-applications-page {
+  background: #dce7f6;
+  border-radius: 32px;
+  overflow: hidden;
+}
+
+.phone-layout-device.review-applications-page .phone-layout-content {
   background: #dce7f6;
   padding: 24px 16px 40px;
 }
 
 .review-applications-shell {
   width: 100%;
+  min-height: 100%;
+}
+
+.shelter-back-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin: 0 0 16px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #162031;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 .review-applications-header {
@@ -19,7 +39,7 @@
 .review-applications-header h1 {
   margin: 0 0 8px;
   color: #162031;
-  font-size: 40px;
+  font-size: 38px;
 }
 
 .review-applications-header p {
@@ -55,7 +75,7 @@
 .review-application-top h2,
 .review-application-top p {
   margin: 0;
-
+  color:black;  
 }
 
 .review-application-top p {
@@ -118,6 +138,21 @@
 .review-application-actions button:disabled {
   opacity: 0.45;
   cursor: default;
+}
+
+.review-application-delete-row {
+  margin-top: 12px;
+}
+
+.review-application-delete-btn {
+  border: 1px solid #d8c7e0;
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: #fff;
+  color: #5f456d;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .review-visit-form {

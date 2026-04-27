@@ -8,6 +8,14 @@ import { createDogProfile } from "../../lib/pawApi";
 // Limits uploads to the image formats expected by the demo profile form.
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
+const readFileAsDataUrl = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error("Could not read the selected file."));
+    reader.readAsDataURL(file);
+  });
+
 // Lets shelter staff create a new dog profile with optional local photo previews.
 function CreateDogProfile() {
   const navigate = useNavigate();
@@ -15,15 +23,6 @@ function CreateDogProfile() {
   const [photoPreviews, setPhotoPreviews] = useState([]);
   const [status, setStatus] = useState("");
   const [isSaving, setIsSaving] = useState(false);
-
-  // Releases object URLs so repeated photo editing does not leak browser memory.
-  useEffect(() => {
-    return () => {
-      photoPreviews.forEach((photo) => {
-        URL.revokeObjectURL(photo.previewUrl);
-      });
-    };
-  }, [photoPreviews]);
 
   // Provides a short status label for the current preview gallery state.
   const previewCountLabel = useMemo(() => {
@@ -35,34 +34,32 @@ function CreateDogProfile() {
   }, [photoPreviews]);
 
   // Filters uploads to supported image types and stores preview metadata for each file.
-  const handlePhotoSelection = (event) => {
+  const handlePhotoSelection = async (event) => {
     const selectedFiles = Array.from(event.target.files || []).filter((file) =>
       ACCEPTED_IMAGE_TYPES.includes(file.type)
     );
 
-    const nextPhotos = selectedFiles.map((file) => ({
-      id: `${file.name}-${file.lastModified}-${Math.random().toString(36).slice(2, 8)}`,
-      file,
-      name: file.name,
-      previewUrl: URL.createObjectURL(file),
-    }));
+    try {
+      const nextPhotos = await Promise.all(
+        selectedFiles.map(async (file) => ({
+          id: `${file.name}-${file.lastModified}-${Math.random().toString(36).slice(2, 8)}`,
+          file,
+          name: file.name,
+          previewUrl: await readFileAsDataUrl(file),
+        }))
+      );
 
-    setPhotoPreviews((prev) => [...prev, ...nextPhotos]);
-    event.target.value = "";
+      setPhotoPreviews((prev) => [...prev, ...nextPhotos]);
+      event.target.value = "";
+    } catch (error) {
+      setStatus(error.message);
+      event.target.value = "";
+    }
   };
 
-  // Removes a previewed image and immediately revokes its object URL.
+  // Removes a previewed image from the pending upload list.
   const handleRemovePhoto = (photoId) => {
-    setPhotoPreviews((prev) => {
-      const nextPhotos = prev.filter((photo) => photo.id !== photoId);
-      const removedPhoto = prev.find((photo) => photo.id === photoId);
-
-      if (removedPhoto) {
-        URL.revokeObjectURL(removedPhoto.previewUrl);
-      }
-
-      return nextPhotos;
-    });
+    setPhotoPreviews((prev) => prev.filter((photo) => photo.id !== photoId));
   };
 
   // Builds the profile payload from form values and saves it through the shared data layer.
@@ -84,10 +81,7 @@ function CreateDogProfile() {
       description: formData.get("description"),
       healthInfo: formData.get("healthInfo"),
       image: photoPreviews[0]?.previewUrl || recentDog.image,
-      photos: photoPreviews.map((photo) => ({
-        name: photo.name,
-        previewUrl: photo.previewUrl,
-      })),
+      photos: photoPreviews.map((photo) => photo.previewUrl),
     };
 
     const result = await createDogProfile(mockProfile);
@@ -101,13 +95,19 @@ function CreateDogProfile() {
   };
 
   return (
-    <PhoneLayout>
-      <main className="create-dog-page">
-        <section className="create-dog-shell">
+    <PhoneLayout className="create-dog-page">
+      <main className="create-dog-shell">
+          <button
+            type="button"
+            className="shelter-back-btn"
+            onClick={() => navigate("/shelter-dashboard")}
+          >
+            ← Back
+          </button>
           {/* The form mirrors the inputs a shelter dashboard would eventually collect. */}
           <header className="create-dog-header">
             <h1>Create Dog Profile</h1>
-            <p>Use this mock form to preview how a new listing will feel for shelter staff.</p>
+            {/*<p>Use this mock form to preview how a new listing will feel for shelter staff.</p>*/}
           </header>
 
           <form className="create-dog-form" onSubmit={handleSaveMockProfile}>
@@ -186,8 +186,7 @@ function CreateDogProfile() {
             {status ? <p className="create-dog-inline-status">{status}</p> : null}
           </form>
 
-          <section className="create-dog-preview"></section>
-        </section>
+        <section className="create-dog-preview"></section>
       </main>
     </PhoneLayout>
   );

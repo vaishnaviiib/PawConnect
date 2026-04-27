@@ -1,11 +1,12 @@
 import "./ShelterDashboard.css";
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import PhoneLayout from "../../components/PhoneLayout/PhoneLayout";
 import shelterDogs from "../../mockData/shelterDogs";
 import shelterApplications from "../../mockData/shelterApplications";
 import shelterAppointments from "../../mockData/shelterAppointments";
 import {
+  deleteLocalShelterDog,
   getAppointments,
   getLocalShelterDogs,
   getSubmittedApplications,
@@ -13,7 +14,11 @@ import {
 
 // Summarizes shelter activity and links staff into the main management flows.
 function ShelterDashboard() {
-  const savedDogs = useMemo(() => getLocalShelterDogs(), []);
+  const [savedDogs, setSavedDogs] = useState([]);
+
+  useEffect(() => {
+    setSavedDogs(getLocalShelterDogs());
+  }, []);
 
   // Combines seeded mock counts with locally created data for a fuller demo dashboard.
   const availableCount =
@@ -26,10 +31,19 @@ function ShelterDashboard() {
     shelterAppointments.filter((appointment) => appointment.status !== "Reschedule").length +
     getAppointments().length;
 
+  const handleDeleteDog = (dogId) => {
+    const isConfirmed = window.confirm("Are you sure you want to delete this dog listing?");
+
+    if (!isConfirmed) {
+      return;
+    }
+
+    setSavedDogs(deleteLocalShelterDog(dogId));
+  };
+
   return (
-    <PhoneLayout>
-      <main className="shelter-dashboard-page">
-        <section className="shelter-dashboard-shell">
+    <PhoneLayout className="shelter-dashboard-page">
+      <main className="shelter-dashboard-shell">
           {/* Hero copy frames the shelter dashboard as an operational home base. */}
           <header className="shelter-dashboard-hero">
             <p className="shelter-dashboard-kicker">PawConnect Shelter</p>
@@ -81,15 +95,26 @@ function ShelterDashboard() {
               {savedDogs.length > 0 ? (
                 savedDogs.map((dog) => (
                   <article key={dog.id} className="shelter-dog-card">
-                    <img src={dog.image || shelterDogs[0].image} alt={dog.name} />
+                    <img
+                      src={dog.image || dog.photos?.[0] || shelterDogs[0].image}
+                      alt={dog.name}
+                    />
                     <div className="shelter-dog-copy">
-                      <div>
+                      <div className="shelter-dog-copy-top">
                         <h3>{dog.name}</h3>
-                        <p>
-                          {dog.breed} · {dog.age} yrs
-                        </p>
+                        <button
+                          type="button"
+                          className="shelter-delete-btn"
+                          onClick={() => handleDeleteDog(dog.id)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                      <div>
+                        <p>{dog.breed}</p>
                       </div>
                       <span className="shelter-status-pill">{dog.status}</span>
+                      <p>{dog.age} yrs</p>
                       <p>{dog.location}</p>
                     </div>
                   </article>
@@ -102,7 +127,6 @@ function ShelterDashboard() {
               )}
             </div>
           </section>
-        </section>
       </main>
     </PhoneLayout>
   );

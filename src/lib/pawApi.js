@@ -126,6 +126,29 @@ const normalizeAppointment = (appointment) => ({
   dogImage: appointment.dogImage || mockDogs[0].image,
 });
 
+const normalizeApplicationStatus = (status) =>
+  status === "Rejected" ? "Declined" : status || "Pending";
+
+const getApplicationDedupKey = (application) => {
+  const dogKey = application.dogId || application.dogName || application.id;
+  return `${String(dogKey).toLowerCase()}::${normalizeApplicationStatus(application.status)}`;
+};
+
+const dedupeApplications = (applications) => {
+  const seen = new Set();
+
+  return applications.filter((application) => {
+    const key = getApplicationDedupKey(application);
+
+    if (seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+  });
+};
+
 // Deduplicates merged lists by id while preserving the latest matching entry.
 const mergeById = (items) => {
   const seen = new Map();
@@ -208,6 +231,12 @@ export const saveLocalShelterDog = (dog) => {
   writeJson(SHELTER_DOGS_KEY, [normalizeDog(dog), ...existingDogs]);
 };
 
+export const deleteLocalShelterDog = (dogId) => {
+  const nextDogs = getLocalShelterDogs().filter((dog) => String(dog.id) !== String(dogId));
+  writeJson(SHELTER_DOGS_KEY, nextDogs);
+  return nextDogs;
+};
+
 // Creates a dog profile through the backend when possible, with local fallback.
 export const createDogProfile = async (dog) => {
   const currentUser = getCurrentUser();
@@ -240,7 +269,7 @@ export const createDogProfile = async (dog) => {
         description: dog.description,
         specialNeeds: dog.specialNeeds || "",
         healthInfo: dog.healthInfo,
-        photos: dog.photos.map((photo) => photo.previewUrl),
+        photos: dog.photos.map((photo) => photo?.previewUrl || photo),
       }),
     });
 
@@ -322,11 +351,47 @@ export const getDogById = async (id) => {
 };
 
 export const getSubmittedApplications = () =>
-  readJson(SUBMITTED_APPLICATIONS_KEY, []).map(normalizeApplication);
+  dedupeApplications(readJson(SUBMITTED_APPLICATIONS_KEY, []).map(normalizeApplication));
 
 // Persists the normalized application list used by adopter and shelter flows.
 const saveSubmittedApplications = (applications) => {
-  writeJson(SUBMITTED_APPLICATIONS_KEY, applications.map(normalizeApplication));
+  writeJson(
+    SUBMITTED_APPLICATIONS_KEY,
+    dedupeApplications(applications.map(normalizeApplication))
+  );
+};
+
+export const deleteDeclinedApplication = (applicationId) => {
+  const existingApplications = getSubmittedApplications();
+  const application = existingApplications.find((item) => item.id === applicationId);
+
+  if (!application) {
+    return existingApplications;
+  }
+
+  if (!["Declined", "Rejected"].includes(application.status)) {
+    throw new Error("Only declined applications can be deleted.");
+  }
+
+  const nextApplications = existingApplications.filter((item) => item.id !== applicationId);
+  saveSubmittedApplications(nextApplications);
+  return nextApplications;
+};
+
+export const findExistingApplicationForDog = (dog) => {
+  const dogId = String(dog.id || "");
+  const dogName = String(dog.name || "").toLowerCase();
+
+  return getSubmittedApplications().find((application) => {
+    const applicationDogId = String(application.dogId || "");
+    const applicationDogName = String(application.dogName || "").toLowerCase();
+
+    return (
+      normalizeApplicationStatus(application.status) !== "Declined" &&
+      ((dogId && applicationDogId && applicationDogId === dogId) ||
+        (dogName && applicationDogName === dogName))
+    );
+  });
 };
 
 // Creates a dog-specific application using the saved general application answers.
@@ -340,6 +405,17 @@ export const submitDogInterest = async (dog) => {
 
   if (!isObject(generalApplication)) {
     throw new Error("Please save your general application before expressing interest.");
+  }
+
+  const existingApplication = findExistingApplicationForDog(dog);
+
+  if (existingApplication) {
+    return {
+      application: existingApplication,
+      source: existingApplication.source || "local",
+      error: "",
+      isDuplicate: true,
+    };
   }
 
   const localApplication = normalizeApplication({
@@ -405,6 +481,7 @@ export const submitDogInterest = async (dog) => {
       application: apiApplication,
       source: "api",
       error: "",
+      isDuplicate: false,
     };
   } catch (error) {
     const existingApplications = getSubmittedApplications();
@@ -414,6 +491,7 @@ export const submitDogInterest = async (dog) => {
       application: localApplication,
       source: "local",
       error: error.message,
+      isDuplicate: false,
     };
   }
 };
@@ -438,13 +516,13 @@ export const getApplicationsForUser = async () => {
       : [];
 
     return {
-      applications: mergeById([...localApplications, ...apiApplications]),
+      applications: dedupeApplications(mergeById([...localApplications, ...apiApplications])),
       source: "api",
       error: "",
     };
   } catch (error) {
     return {
-      applications: localApplications,
+      applications: dedupeApplications(localApplications),
       source: "local",
       error: error.message,
     };

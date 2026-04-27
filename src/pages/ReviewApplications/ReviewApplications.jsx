@@ -1,8 +1,10 @@
 import "./ReviewApplications.css";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import PhoneLayout from "../../components/PhoneLayout/PhoneLayout";
 import shelterApplications from "../../mockData/shelterApplications";
 import {
+  deleteDeclinedApplication,
   getApplicationsForUser,
   scheduleVisit,
   updateApplicationStatus,
@@ -10,7 +12,9 @@ import {
 
 // Gives shelter staff a queue for reviewing applications and scheduling visits.
 function ReviewApplications() {
+  const navigate = useNavigate();
   const [localApplications, setLocalApplications] = useState([]);
+  const [dismissedMockApplicationIds, setDismissedMockApplicationIds] = useState([]);
   const [activeScheduleId, setActiveScheduleId] = useState("");
   const [scheduleDraft, setScheduleDraft] = useState({ date: "", time: "" });
   const [statusMessage, setStatusMessage] = useState("");
@@ -61,11 +65,11 @@ function ReviewApplications() {
   const combinedApplications = [
     ...localApplications,
     ...shelterApplications.map((application) => ({ ...application, isLocal: false })),
-  ];
+  ].filter((application) => !dismissedMockApplicationIds.includes(application.id));
 
   // Applies an approval or decline change and refreshes the local review list.
-  const handleStatusChange = (applicationId, status) => {
-    const nextApplications = updateApplicationStatus(applicationId, status);
+  const handleStatusChange = async (applicationId, status) => {
+    const nextApplications = await updateApplicationStatus(applicationId, status);
     setLocalApplications(
       nextApplications.map((application) => ({
         id: application.id,
@@ -79,6 +83,36 @@ function ReviewApplications() {
         isLocal: true,
       }))
     );
+  };
+
+  const handleDeleteDeclinedApplication = (application) => {
+    const isConfirmed = window.confirm(
+      "Are you sure you want to delete this declined application?"
+    );
+
+    if (!isConfirmed) {
+      return;
+    }
+
+    if (application.isLocal) {
+      const nextApplications = deleteDeclinedApplication(application.id);
+      setLocalApplications(
+        nextApplications.map((item) => ({
+          id: item.id,
+          applicantName: item.applicantName,
+          dogName: item.dogName,
+          applicationType: item.applicationType,
+          submittedAt: "Just now",
+          homeType: item.homeType || "Home details saved in demo application",
+          experience: item.experience || "Experience pending",
+          status: item.status,
+          isLocal: true,
+        }))
+      );
+      return;
+    }
+
+    setDismissedMockApplicationIds((prev) => [...prev, application.id]);
   };
 
   // Creates a visit from the active draft and updates the application's status.
@@ -99,13 +133,19 @@ function ReviewApplications() {
   };
 
   return (
-    <PhoneLayout>
-      <main className="review-applications-page">
-        <section className="review-applications-shell">
+    <PhoneLayout className="review-applications-page">
+      <main className="review-applications-shell">
+          <button
+            type="button"
+            className="shelter-back-btn"
+            onClick={() => navigate("/shelter-dashboard")}
+          >
+            ← Back
+          </button>
           {/* Header copy explains that this screen is still backed by mock-first data. */}
           <header className="review-applications-header">
             <h1>Review Applications</h1>
-            <p>Sort through mock applicant profiles before wiring this page to the API.</p>
+            <p>{/*Sort through mock applicant profiles before wiring this page to the API.*/}</p>
             {statusMessage ? <p>{statusMessage}</p> : null}
           </header>
 
@@ -168,6 +208,18 @@ function ReviewApplications() {
                   </button>
                 </div>
 
+                {["Declined", "Rejected"].includes(application.status) ? (
+                  <div className="review-application-delete-row">
+                    <button
+                      type="button"
+                      className="review-application-delete-btn"
+                      onClick={() => handleDeleteDeclinedApplication(application)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                ) : null}
+
                 {application.isLocal && activeScheduleId === application.id ? (
                   <div className="review-visit-form">
                     <input
@@ -192,7 +244,6 @@ function ReviewApplications() {
               </article>
             ))}
           </div>
-        </section>
       </main>
     </PhoneLayout>
   );

@@ -2,7 +2,11 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import "./DogProfile.css";
 import PhoneLayout from "../../components/PhoneLayout/PhoneLayout";
-import { getDogById, submitDogInterest } from "../../lib/pawApi";
+import {
+  findExistingApplicationForDog,
+  getDogById,
+  submitDogInterest,
+} from "../../lib/pawApi";
 
 // Shows a single dog's details and lets the adopter express interest.
 function DogProfile() {
@@ -65,7 +69,11 @@ function DogProfile() {
       </div>
 
       <div className="profile-card">
-        <img src={dog.image} alt={dog.name} className="profile-image" />
+        <img
+          src={dog.image || dog.photos?.[0]}
+          alt={dog.name}
+          className="profile-image"
+        />
 
         <div className="profile-info">
           <h2>
@@ -118,6 +126,13 @@ function DogProfile() {
             onClick={async () => {
               // Saves an application locally when the backend is unavailable.
               try {
+                const existingApplication = findExistingApplicationForDog(dog);
+
+                if (existingApplication) {
+                  navigate("/applications");
+                  return;
+                }
+
                 const result = await submitDogInterest(dog);
 
                 if (result.error) {

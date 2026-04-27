@@ -243,7 +243,7 @@ function BrowseDogs() {
               {/* Clicking the image or details opens the full dog profile. */}
               <div className="dog-image-wrapper" onClick={handleCardClick}>
                 <img
-                  src={currentDog.image}
+                  src={currentDog.image || currentDog.photos?.[0]}
                   alt={currentDog.name}
                   className="dog-image"
                 />
@@ -298,7 +298,7 @@ function BrowseDogs() {
                   onClick={() => handleFavoriteClick(dog.id)}
                 >
                   <img
-                    src={dog.image}
+                    src={dog.image || dog.photos?.[0]}
                     alt={dog.name}
                     className="favorite-image"
                   />

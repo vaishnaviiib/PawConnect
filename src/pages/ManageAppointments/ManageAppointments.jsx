@@ -1,18 +1,26 @@
 import "./ManageAppointments.css";
 import { useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import PhoneLayout from "../../components/PhoneLayout/PhoneLayout";
 import shelterAppointments from "../../mockData/shelterAppointments";
 import { getAppointments } from "../../lib/pawApi";
 
 // Shows the shelter's scheduled visits by combining mock and locally created appointments.
 function ManageAppointments() {
+  const navigate = useNavigate();
   const localAppointments = useMemo(() => getAppointments(), []);
   const combinedAppointments = [...localAppointments, ...shelterAppointments];
 
   return (
-    <PhoneLayout>
-      <main className="manage-appointments-page">
-        <section className="manage-appointments-shell">
+    <PhoneLayout className="manage-appointments-page">
+      <main className="manage-appointments-shell">
+          <button
+            type="button"
+            className="shelter-back-btn"
+            onClick={() => navigate("/shelter-dashboard")}
+          >
+            ← Back
+          </button>
           {/* Summary cards surface the day's overall visit workload. */}
           <header className="manage-appointments-header">
             <h1>Manage Appointments</h1>
@@ -50,7 +58,6 @@ function ManageAppointments() {
               </article>
             ))}
           </div>
-        </section>
       </main>
     </PhoneLayout>
   );

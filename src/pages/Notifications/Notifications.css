@@ -62,6 +62,10 @@ body {
   width: 100%;
 }
 
+.notification-card-clickable {
+  cursor: pointer;
+}
+
 .notification-left {
   display: flex;
   align-items: center;
@@ -122,7 +126,20 @@ body {
   display: flex;
   align-items: center;
   */
+  display: flex;
+  align-items: center;
+  gap: 10px;
   justify-self: end;
+}
+
+.notification-dismiss-btn {
+  border: none;
+  background: transparent;
+  color: #8b8b8b;
+  font-size: 12px;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
 }
 
 .view-btn {

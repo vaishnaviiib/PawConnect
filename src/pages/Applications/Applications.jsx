@@ -1,15 +1,13 @@
 import "./Applications.css";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import BottomNav from "../../components/BottomNav/BottomNav";
 import PhoneLayout from "../../components/PhoneLayout/PhoneLayout";
 import { getApplicationsForUser, getCurrentUser } from "../../lib/pawApi";
 
-// Lists the current user''s saved applications and their latest status.
 // Lists the current user's saved applications and their latest status.
 function Applications() {
   const [applications, setApplications] = useState([]);
   const [source, setSource] = useState("loading");
-  const [error, setError] = useState("");
 
   // Fetches applications once and preserves the last successful result in state.
   useEffect(() => {
@@ -25,7 +23,6 @@ function Applications() {
 
       setApplications(result.applications);
       setSource(result.source);
-      setError(result.error);
     };
 
     loadApplications();
@@ -35,32 +32,68 @@ function Applications() {
     };
   }, []);
 
-  return (
-    <PhoneLayout>
-      <div className="applications-page">
-        <section className="page-placeholder">
-          {/* The source label explains whether data came from local storage or the API. */}
-          <h2>Applications</h2>
-          <p>
-            {source === "local"
-              ? "Showing locally saved applications."
-              : "Showing applications from the backend."}
-          </p>
-          {error ? <p>{error}</p> : null}
+  const statusDisplay = useMemo(
+    () => ({
+      Submitted: "Submitted",
+      Pending: "Submitted",
+      Approved: "Approved",
+      Declined: "Declined",
+      Rejected: "Declined",
+      "Visit Scheduled": "Visit Scheduled",
+    }),
+    []
+  );
 
-          {applications.length > 0 ? (
-            applications.map((application) => (
-              <article key={application.id} className="applications-entry">
-                <h3>{application.dogName || "General Application"}</h3>
-                <p>{application.applicationType || "Adoption/Foster Application"}</p>
-                <p>Status: {application.status || "Saved"}</p>
-                {application.dogBreed ? <p>{application.dogBreed}</p> : null}
-              </article>
-            ))
-          ) : (
-            <p>No applications yet.</p>
-          )}
+  const pageMessage =
+    source === "api" ? "Tracking your recent applications." : "Showing saved applications.";
+
+  return (
+    <PhoneLayout className="applications-page">
+      <div className="applications-shell">
+        <section className="applications-hero">
+          <h2>Applications</h2>
+          <p>{pageMessage}</p>
         </section>
+
+        {applications.length > 0 ? (
+          <div className="applications-list">
+            {applications.map((application) => {
+              const statusLabel =
+                statusDisplay[application.status] || application.status || "Submitted";
+              const statusClass = statusLabel.toLowerCase().replace(/\s+/g, "-");
+
+              return (
+                <article key={application.id} className="application-card">
+                  <div className="application-card-top">
+                    <div>
+                      <h3>{application.dogName || "General Application"}</h3>
+                      <p>{application.dogBreed || "Breed details pending"}</p>
+                    </div>
+                    <span className={`application-status-badge status-${statusClass}`}>
+                      {statusLabel}
+                    </span>
+                  </div>
+
+                  <div className="application-card-meta">
+                    <div>
+                      <span>Application Type</span>
+                      <strong>{application.applicationType || "Adoption"}</strong>
+                    </div>
+                    <div>
+                      <span>Shelter</span>
+                      <strong>{application.shelter || "Lone Star Rescue"}</strong>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        ) : (
+          <section className="applications-empty-state">
+            <h3>No applications yet</h3>
+            <p>Express interest in a dog to see your saved applications here.</p>
+          </section>
+        )}
 
         <BottomNav />
       </div>

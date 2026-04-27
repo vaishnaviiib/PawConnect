@@ -1,11 +1,17 @@
-.shelter-dashboard-page {
-  min-height: 100%;
+.phone-layout-device.shelter-dashboard-page {
+  background: #f7f0c8;
+  border-radius: 32px;
+  overflow: hidden;
+}
+
+.phone-layout-device.shelter-dashboard-page .phone-layout-content {
   background: #f7f0c8;
   padding: 24px 16px 40px;
 }
 
 .shelter-dashboard-shell {
   width: 100%;
+  min-height: 100%;
 }
 
 .shelter-dashboard-hero {
@@ -158,10 +164,28 @@
   margin: 0;
 }
 
+.shelter-dog-copy-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .shelter-dog-copy p {
   margin-top: 6px;
   color: #574c59;
   line-height: 1.4;
+}
+
+.shelter-delete-btn {
+  border: 1px solid #dfcde4;
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: #fff;
+  color: #5e4871;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 .shelter-status-pill {
