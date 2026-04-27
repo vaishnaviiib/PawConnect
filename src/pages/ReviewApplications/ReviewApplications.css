@@ -39,7 +39,8 @@
 .review-applications-header h1 {
   margin: 0 0 8px;
   color: #162031;
-  font-size: 38px;
+  font-size: 35px;
+  line-height: 1;
 }
 
 .review-applications-header p {
@@ -58,8 +59,8 @@
 }
 
 .review-application-card {
-  background: #fffdf8;
-  border: 1px solid #eee1c9;
+  background: #fdf8ff;
+  border: 1px solid #d8c0de;
   border-radius: 24px;
   padding: 18px;
 }
@@ -120,7 +121,7 @@
 
 .review-application-actions {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 10px;
   margin-top: 16px;
 }
@@ -153,37 +154,4 @@
   cursor: pointer;
   font-size: 14px;
   font-weight: 600;
-}
-
-.review-visit-form {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 14px;
-  color:black; 
-}
-
-.review-visit-form input,
-
-
-.review-visit-form button {
-  border-radius: 14px;
-  padding: 12px 14px;
-  font-size: 14px;
-  color:black; 
-}
-
-.review-visit-form input {
-  border: 1px solid #c9d8ee;
-  background: transparent;
-  color:black; 
-}
-
-.review-visit-form button {
-  grid-column: 1 / -1;
-  border: none;
-  background: #5a6f98;
-  color: transparent;
-  cursor: pointer;
-
 }

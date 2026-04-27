@@ -51,7 +51,7 @@ function Applications() {
     <PhoneLayout className="applications-page">
       <div className="applications-shell">
         <section className="applications-hero">
-          <h2>Applications</h2>
+          <h2>Applications ⋆˙⟡</h2>
           <p>{pageMessage}</p>
         </section>
 

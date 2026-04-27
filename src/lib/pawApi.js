@@ -113,6 +113,14 @@ const normalizeApplication = (application) => {
   };
 };
 
+const normalizeAppointmentStatus = (status) => {
+  if (status === "Pending") {
+    return "Requested";
+  }
+
+  return status || "Confirmed";
+};
+
 // Standardizes appointment records for the shelter scheduling screens.
 const normalizeAppointment = (appointment) => ({
   id: appointment.id || `appointment-${Date.now()}`,
@@ -121,7 +129,7 @@ const normalizeAppointment = (appointment) => ({
   visitorName: appointment.visitorName || "Applicant",
   slot: appointment.slot || "",
   type: appointment.type || "Meet and greet",
-  status: appointment.status || "Confirmed",
+  status: normalizeAppointmentStatus(appointment.status),
   shelter: appointment.shelter || "Lone Star Rescue",
   dogImage: appointment.dogImage || mockDogs[0].image,
 });
@@ -566,12 +574,21 @@ export const updateApplicationStatus = async (applicationId, status) => {
 // Returns saved shelter visits in a consistent appointment shape.
 export const getAppointments = () => readJson(APPOINTMENTS_KEY, []).map(normalizeAppointment);
 
-// Creates a visit appointment and marks the related application accordingly.
-export const scheduleVisit = ({ applicationId, date, time }) => {
+export const findAppointmentForApplication = (applicationId) =>
+  getAppointments().find((appointment) => appointment.applicationId === applicationId);
+
+// Creates a locally stored visit request for an approved application.
+export const requestVisitAppointment = ({ applicationId, date, time }) => {
   const application = getSubmittedApplications().find((item) => item.id === applicationId);
 
   if (!application) {
     throw new Error("Application not found.");
+  }
+
+  const existingAppointment = findAppointmentForApplication(applicationId);
+
+  if (existingAppointment) {
+    return existingAppointment;
   }
 
   const nextAppointment = normalizeAppointment({
@@ -581,33 +598,56 @@ export const scheduleVisit = ({ applicationId, date, time }) => {
     visitorName: application.applicantName,
     slot: `${date} at ${time}`,
     type: "Meet and greet",
-    status: "Confirmed",
+    status: "Requested",
     shelter: application.shelter,
     dogImage: application.dogImage,
   });
 
   const existingAppointments = getAppointments();
   writeJson(APPOINTMENTS_KEY, [nextAppointment, ...existingAppointments]);
-  saveSubmittedApplications(
-    getSubmittedApplications().map((item) =>
-      item.id === applicationId ? { ...item, status: "Visit Scheduled" } : item
-    )
-  );
 
   return nextAppointment;
 };
+
+// Updates a locally stored visit request after the shelter reviews it.
+export const updateAppointmentStatus = (appointmentId, status) => {
+  const nextAppointments = getAppointments().map((appointment) =>
+    appointment.id === appointmentId ? { ...appointment, status } : appointment
+  );
+
+  writeJson(APPOINTMENTS_KEY, nextAppointments);
+
+  const updatedAppointment = nextAppointments.find((appointment) => appointment.id === appointmentId);
+
+  if (updatedAppointment?.applicationId && status === "Confirmed") {
+    saveSubmittedApplications(
+      getSubmittedApplications().map((application) =>
+        application.id === updatedAppointment.applicationId
+          ? { ...application, status: "Visit Scheduled" }
+          : application
+      )
+    );
+  }
+
+  return nextAppointments.map(normalizeAppointment);
+};
+
+// Backward-compatible helper for any older visit-scheduling entry points.
+export const scheduleVisit = ({ applicationId, date, time }) =>
+  requestVisitAppointment({ applicationId, date, time });
 
 // Builds notification items from saved application activity.
 export const getApplicationNotifications = () => {
   return getSubmittedApplications().map((application) => ({
     id: application.id,
+    applicationId: application.id,
     shelter: application.shelter,
     status: `${application.dogName} application ${application.status.toLowerCase()}`,
     time: "now",
     image: application.dogImage || mockDogs[0].image,
     avatar:
       "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80",
-    type: "pending",
+    type: application.status.toLowerCase().replace(/\s+/g, "-"),
   }));
 };
 
@@ -616,7 +656,12 @@ export const getVisitNotifications = () => {
   return getAppointments().map((appointment) => ({
     id: appointment.id,
     shelter: appointment.shelter,
-    status: `Visit scheduled for ${appointment.slot}`,
+    status:
+      appointment.status === "Requested"
+        ? `Visit request sent for ${appointment.slot}`
+        : appointment.status === "Declined"
+          ? `Visit request declined for ${appointment.slot}`
+          : `Visit scheduled for ${appointment.slot}`,
     time: "now",
     image: appointment.dogImage || mockDogs[0].image,
     avatar:

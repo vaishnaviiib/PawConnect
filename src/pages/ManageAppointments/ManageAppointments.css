@@ -1,12 +1,13 @@
 .phone-layout-device.manage-appointments-page {
-  background: #dfead8;
+  background: #ecffe0;
   border-radius: 32px;
   overflow: hidden;
 }
 
 .phone-layout-device.manage-appointments-page .phone-layout-content {
-  background: #dfead8;
+  background: #f3feec;
   padding: 24px 16px 40px;
+  border-radius: 24px;
 }
 
 .manage-appointments-shell {
@@ -57,7 +58,7 @@
 }
 
 .manage-appointments-summary article {
-  background: #fff9ec;
+  background: #fef0fa;
   border-radius: 20px;
   padding: 18px 16px;
 }
@@ -115,6 +116,23 @@
   font-weight: 700;
 }
 
+.manage-appointment-status.status-requested,
+.manage-appointment-status.status-pending-shelter-review,
+.manage-appointment-status.status-pending {
+  background: #fef0fa;
+  color: #8a5b07;
+}
+
+.manage-appointment-status.status-confirmed {
+  background: #e7f6ea;
+  color: #2d6c3d;
+}
+
+.manage-appointment-status.status-declined {
+  background: #f9e7e7;
+  color: #8d3838;
+}
+
 .manage-appointment-dog {
   margin-top: 12px;
   font-size: 16px;
@@ -142,4 +160,8 @@
   color: #fff;
   cursor: pointer;
   font-size: 14px;
+}
+
+.manage-appointment-decline-btn {
+  background: #7d2e2e;
 }

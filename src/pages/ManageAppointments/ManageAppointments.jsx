@@ -1,15 +1,34 @@
 import "./ManageAppointments.css";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PhoneLayout from "../../components/PhoneLayout/PhoneLayout";
 import shelterAppointments from "../../mockData/shelterAppointments";
-import { getAppointments } from "../../lib/pawApi";
+import { getAppointments, updateAppointmentStatus } from "../../lib/pawApi";
 
 // Shows the shelter's scheduled visits by combining mock and locally created appointments.
 function ManageAppointments() {
   const navigate = useNavigate();
-  const localAppointments = useMemo(() => getAppointments(), []);
-  const combinedAppointments = [...localAppointments, ...shelterAppointments];
+  const [localAppointments, setLocalAppointments] = useState([]);
+
+  useEffect(() => {
+    setLocalAppointments(getAppointments());
+  }, []);
+
+  const combinedAppointments = useMemo(
+    () => [
+      ...localAppointments.map((appointment) => ({ ...appointment, isLocal: true })),
+      ...shelterAppointments.map((appointment) => ({ ...appointment, isLocal: false })),
+    ],
+    [localAppointments]
+  );
+
+  const pendingAppointments = combinedAppointments.filter((appointment) =>
+    ["Requested", "Pending Shelter Review", "Pending"].includes(appointment.status)
+  );
+
+  const handleAppointmentDecision = (appointmentId, status) => {
+    setLocalAppointments(updateAppointmentStatus(appointmentId, status));
+  };
 
   return (
     <PhoneLayout className="manage-appointments-page">
@@ -23,7 +42,7 @@ function ManageAppointments() {
           </button>
           {/* Summary cards surface the day's overall visit workload. */}
           <header className="manage-appointments-header">
-            <h1>Manage Appointments</h1>
+            <h1>Manage Appointments ⋆‧°𓏲ּ𝄢</h1>
             <p>Mock visit scheduling for your shelter team, with soft reminders and status chips.</p>
           </header>
 
@@ -34,11 +53,11 @@ function ManageAppointments() {
             </article>
             <article>
               <span>Pending</span>
-              <strong>{combinedAppointments.filter((item) => item.status === "Pending").length} follow-up</strong>
+              <strong>{pendingAppointments.length} follow-up</strong>
             </article>
           </section>
 
-          {/* Appointment cards are display-only for the seeded shelter examples. */}
+          {/* Appointment cards let the shelter review locally requested visits alongside seeded demos. */}
           <div className="manage-appointments-list">
             {combinedAppointments.map((appointment) => (
               <article key={appointment.id} className="manage-appointment-card">
@@ -47,14 +66,30 @@ function ManageAppointments() {
                     <h2>{appointment.visitorName}</h2>
                     <p>{appointment.type}</p>
                   </div>
-                  <span>{appointment.status}</span>
+                  <span className={`manage-appointment-status status-${appointment.status.toLowerCase().replace(/\s+/g, "-")}`}>
+                    {appointment.status}
+                  </span>
                 </div>
                 <p className="manage-appointment-dog">{appointment.dogName}</p>
                 <p className="manage-appointment-slot">{appointment.slot}</p>
-                <div className="manage-appointment-actions">
-                  <button type="button">Confirm</button>
-                  <button type="button">Reschedule</button>
-                </div>
+                {appointment.isLocal &&
+                ["Requested", "Pending Shelter Review"].includes(appointment.status) ? (
+                  <div className="manage-appointment-actions">
+                    <button
+                      type="button"
+                      onClick={() => handleAppointmentDecision(appointment.id, "Confirmed")}
+                    >
+                      Confirm
+                    </button>
+                    <button
+                      type="button"
+                      className="manage-appointment-decline-btn"
+                      onClick={() => handleAppointmentDecision(appointment.id, "Declined")}
+                    >
+                      Decline
+                    </button>
+                  </div>
+                ) : null}
               </article>
             ))}
           </div>

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Notifications.css";
 import notifications from "../../mockData/notifications";
@@ -6,7 +6,9 @@ import BottomNav from "../../components/BottomNav/BottomNav";
 import PhoneLayout from "../../components/PhoneLayout/PhoneLayout";
 import {
   getApplicationNotifications,
+  getAppointments,
   getVisitNotifications,
+  requestVisitAppointment,
 } from "../../lib/pawApi";
 
 const DISMISSED_NOTIFICATIONS_KEY = "pawconnectDismissedNotifications";
@@ -15,6 +17,11 @@ const DISMISSED_NOTIFICATIONS_KEY = "pawconnectDismissedNotifications";
 function Notifications() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("applications");
+  const [applicationNotifications, setApplicationNotifications] = useState([]);
+  const [visitNotifications, setVisitNotifications] = useState([]);
+  const [appointments, setAppointments] = useState([]);
+  const [activeVisitRequestId, setActiveVisitRequestId] = useState("");
+  const [visitDraft, setVisitDraft] = useState({ date: "", time: "" });
   const [dismissedNotificationIds, setDismissedNotificationIds] = useState(() => {
     try {
       const value = localStorage.getItem(DISMISSED_NOTIFICATIONS_KEY);
@@ -24,23 +31,18 @@ function Notifications() {
     }
   });
 
-  // Captures application notifications once so tab changes stay cheap.
-  const localApplicationNotifications = useMemo(
-    () => getApplicationNotifications(),
-    []
-  );
-
-  // Captures visit notifications once so tab changes stay cheap.
-  const localVisitNotifications = useMemo(
-    () => getVisitNotifications(),
-    []
-  );
+  // Refreshes local notification state after application or visit changes.
+  useEffect(() => {
+    setApplicationNotifications(getApplicationNotifications());
+    setVisitNotifications(getVisitNotifications());
+    setAppointments(getAppointments());
+  }, []);
 
   // Switches between application activity and scheduled-visit activity.
   const displayedNotifications =
     activeTab === "applications"
-      ? [...localApplicationNotifications, ...notifications.applications]
-      : [...localVisitNotifications, ...notifications.visits];
+      ? [...applicationNotifications, ...notifications.applications]
+      : [...visitNotifications, ...notifications.visits];
 
   const visibleNotifications = displayedNotifications.filter(
     (item) => !dismissedNotificationIds.includes(String(item.id))
@@ -56,6 +58,23 @@ function Notifications() {
 
   const handleOpenApplications = () => {
     navigate("/applications");
+  };
+
+  const handleRequestVisit = (applicationId) => {
+    if (!visitDraft.date || !visitDraft.time) {
+      return;
+    }
+
+    requestVisitAppointment({
+      applicationId,
+      date: visitDraft.date,
+      time: visitDraft.time,
+    });
+
+    setAppointments(getAppointments());
+    setVisitNotifications(getVisitNotifications());
+    setActiveVisitRequestId("");
+    setVisitDraft({ date: "", time: "" });
   };
 
   return (
@@ -81,66 +100,129 @@ function Notifications() {
 
       <div className="notifications-list">
         {/* Cards mix static design data with notifications generated from local actions. */}
-        {visibleNotifications.map((item) => (
-          <div
-            className={`notification-card ${
-              activeTab === "applications" ? "notification-card-clickable" : ""
-            }`}
-            key={item.id}
-            onClick={activeTab === "applications" ? handleOpenApplications : undefined}
-          >
-            <div className="notification-left">
-              <span className="pink-dot"></span>
-              <img
-                src={item.avatar}
-                alt="avatar"
-                className="notification-avatar"
-              />
-            </div>
+        {visibleNotifications.map((item) => {
+          const hasRequestedVisit = appointments.some(
+            (appointment) => appointment.applicationId === item.applicationId
+          );
+          const canRequestVisit =
+            activeTab === "applications" &&
+            item.type === "approved" &&
+            item.applicationId &&
+            !hasRequestedVisit;
 
-            <div className="notification-center">
-              <div className="notification-header">
-                <h3>{item.shelter}</h3>
-                <span>{item.time}</span>
-              </div>
-              <p>{item.status}</p>
-            </div>
-
-            <div className="notification-right">
-              {activeTab === "applications" ? (
-                <button
-                  type="button"
-                  className="view-btn"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    handleOpenApplications();
-                  }}
-                >
-                  View
-                </button>
-              ) : item.type === "approved" ? (
-                <button className="view-btn">View</button>
-              ) : (
-                <img
-                  src={item.image}
-                  alt="dog"
-                  className="notification-thumb"
-                />
-              )}
-              <button
-                type="button"
-                className="notification-dismiss-btn"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  handleDismissNotification(item.id);
-                }}
-                aria-label="Dismiss notification"
+          return (
+            <div
+              className={`notification-card-shell ${
+                canRequestVisit && activeVisitRequestId === item.applicationId
+                  ? "notification-card-shell-expanded"
+                  : ""
+              }`}
+              key={item.id}
+            >
+              <div
+                className={`notification-card ${
+                  activeTab === "applications" ? "notification-card-clickable" : ""
+                }`}
+                onClick={activeTab === "applications" ? handleOpenApplications : undefined}
               >
-                X
-              </button>
+                <div className="notification-left">
+                  <span className="pink-dot"></span>
+                  {/*<img
+                    src={item.avatar}
+                    alt="avatar"
+                    className="notification-avatar"
+                  />
+                  */}
+                </div>
+
+                <div className="notification-center">
+                  <div className="notification-header">
+                    <h3>{item.shelter}</h3>
+                    <span>{item.time}</span>
+                  </div>
+                  <p>{item.status}</p>
+                </div>
+
+                <div className="notification-right">
+                  {activeTab === "applications" ? (
+                    <div className="notification-actions">
+                      <button
+                        type="button"
+                        className="view-btn"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleOpenApplications();
+                        }}
+                      >
+                        View
+                      </button>
+                      {canRequestVisit ? (
+                        <button
+                          type="button"
+                          className="notification-secondary-btn"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setActiveVisitRequestId(
+                              activeVisitRequestId === item.applicationId ? "" : item.applicationId
+                            );
+                            setVisitDraft({ date: "", time: "" });
+                          }}
+                        >
+                          Request Visit
+                        </button>
+                      ) : null}
+                    </div>
+                  ) : item.type === "approved" ? (
+                    <button className="view-btn">View</button>
+                  ) : (
+                    <img
+                      src={item.image}
+                      alt="dog"
+                      className="notification-thumb"
+                    />
+                  )}
+                  <button
+                    type="button"
+                    className="notification-dismiss-btn"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleDismissNotification(item.id);
+                    }}
+                    aria-label="Dismiss notification"
+                  >
+                    X
+                  </button>
+                </div>
+              </div>
+
+              {canRequestVisit && activeVisitRequestId === item.applicationId ? (
+                <div className="notification-request-form">
+                  <input
+                    type="date"
+                    value={visitDraft.date}
+                    onChange={(event) =>
+                      setVisitDraft((prev) => ({ ...prev, date: event.target.value }))
+                    }
+                  />
+                  <input
+                    type="time"
+                    value={visitDraft.time}
+                    onChange={(event) =>
+                      setVisitDraft((prev) => ({ ...prev, time: event.target.value }))
+                    }
+                  />
+                  <button
+                    type="button"
+                    className="notification-request-submit"
+                    onClick={() => handleRequestVisit(item.applicationId)}
+                  >
+                    Send Request
+                  </button>
+                </div>
+              ) : null}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <BottomNav />

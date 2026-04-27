@@ -27,6 +27,7 @@
 .applications-empty-state h3,
 .application-card h3 {
   margin: 0;
+  color: #213040;
 }
 
 .applications-hero p,

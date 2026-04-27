@@ -6,7 +6,6 @@ import shelterApplications from "../../mockData/shelterApplications";
 import {
   deleteDeclinedApplication,
   getApplicationsForUser,
-  scheduleVisit,
   updateApplicationStatus,
 } from "../../lib/pawApi";
 
@@ -15,8 +14,6 @@ function ReviewApplications() {
   const navigate = useNavigate();
   const [localApplications, setLocalApplications] = useState([]);
   const [dismissedMockApplicationIds, setDismissedMockApplicationIds] = useState([]);
-  const [activeScheduleId, setActiveScheduleId] = useState("");
-  const [scheduleDraft, setScheduleDraft] = useState({ date: "", time: "" });
   const [statusMessage, setStatusMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
@@ -115,23 +112,6 @@ function ReviewApplications() {
     setDismissedMockApplicationIds((prev) => [...prev, application.id]);
   };
 
-  // Creates a visit from the active draft and updates the application's status.
-  const handleConfirmVisit = (applicationId) => {
-    if (!scheduleDraft.date || !scheduleDraft.time) {
-      return;
-    }
-
-    scheduleVisit({
-      applicationId,
-      date: scheduleDraft.date,
-      time: scheduleDraft.time,
-    });
-
-    handleStatusChange(applicationId, "Visit Scheduled");
-    setActiveScheduleId("");
-    setScheduleDraft({ date: "", time: "" });
-  };
-
   return (
     <PhoneLayout className="review-applications-page">
       <main className="review-applications-shell">
@@ -144,19 +124,19 @@ function ReviewApplications() {
           </button>
           {/* Header copy explains that this screen is still backed by mock-first data. */}
           <header className="review-applications-header">
-            <h1>Review Applications</h1>
+            <h1>Review Applications ⋆˚✿˖°</h1>
             <p>{/*Sort through mock applicant profiles before wiring this page to the API.*/}</p>
             {statusMessage ? <p>{statusMessage}</p> : null}
           </header>
 
-          {/* Each card shows quick review data plus optional scheduling controls. */}
+          {/* Each card shows quick review data plus approval controls for the shelter. */}
           <div className="review-applications-list">
             {isLoading ? <article className="review-application-card">Loading applications...</article> : null}
             {combinedApplications.map((application) => (
               <article key={application.id} className="review-application-card">
                 <div className="review-application-top">
                   <div>
-                    <h2>{application.applicantName}</h2>
+                    <h2>{application.applicantName} </h2>
                     <p>
                       {application.applicationType} for {application.dogName}
                     </p>
@@ -194,18 +174,6 @@ function ReviewApplications() {
                   >
                     Decline
                   </button>
-                  <button
-                    type="button"
-                    disabled={!application.isLocal}
-                    onClick={() => {
-                      setActiveScheduleId(
-                        activeScheduleId === application.id ? "" : application.id
-                      );
-                      setScheduleDraft({ date: "", time: "" });
-                    }}
-                  >
-                    Request Visit
-                  </button>
                 </div>
 
                 {["Declined", "Rejected"].includes(application.status) ? (
@@ -216,28 +184,6 @@ function ReviewApplications() {
                       onClick={() => handleDeleteDeclinedApplication(application)}
                     >
                       Delete
-                    </button>
-                  </div>
-                ) : null}
-
-                {application.isLocal && activeScheduleId === application.id ? (
-                  <div className="review-visit-form">
-                    <input
-                      type="date"
-                      value={scheduleDraft.date}
-                      onChange={(event) =>
-                        setScheduleDraft((prev) => ({ ...prev, date: event.target.value }))
-                      }
-                    />
-                    <input
-                      type="time"
-                      value={scheduleDraft.time}
-                      onChange={(event) =>
-                        setScheduleDraft((prev) => ({ ...prev, time: event.target.value }))
-                      }
-                    />
-                    <button type="button" onClick={() => handleConfirmVisit(application.id)}>
-                      Confirm Visit
                     </button>
                   </div>
                 ) : null}

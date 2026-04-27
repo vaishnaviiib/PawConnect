@@ -106,7 +106,7 @@ function CreateDogProfile() {
           </button>
           {/* The form mirrors the inputs a shelter dashboard would eventually collect. */}
           <header className="create-dog-header">
-            <h1>Create Dog Profile</h1>
+            <h1>Create Dog Profile ˚⋆˚₊ 𖤓☽˚.⋆</h1>
             {/*<p>Use this mock form to preview how a new listing will feel for shelter staff.</p>*/}
           </header>
 

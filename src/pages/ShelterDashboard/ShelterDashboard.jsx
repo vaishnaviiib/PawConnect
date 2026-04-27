@@ -73,15 +73,15 @@ function ShelterDashboard() {
           <nav className="shelter-dashboard-actions" aria-label="Shelter actions">
             <Link className="shelter-action-card" to="/create-dog">
               <span>Create dog profile</span>
-              <strong>Add a new listing</strong>
+              <strong>Add a new listing ꕤ｡˚⋆</strong>
             </Link>
             <Link className="shelter-action-card" to="/review-applications">
               <span>Review applications</span>
-              <strong>See applicant queue</strong>
+              <strong>See applicant queue ꕤ｡˚⋆</strong>
             </Link>
             <Link className="shelter-action-card" to="/manage-appointments">
               <span>Manage visits</span>
-              <strong>Plan your week</strong>
+              <strong>Plan your week ꕤ｡˚⋆</strong>
             </Link>
           </nav>
 
