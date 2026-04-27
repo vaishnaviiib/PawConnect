@@ -5,9 +5,22 @@ import PhoneLayout from "../../components/PhoneLayout/PhoneLayout";
 import shelterApplications from "../../mockData/shelterApplications";
 import {
   deleteDeclinedApplication,
+  filterApplicationsForCurrentUser,
   getApplicationsForUser,
   updateApplicationStatus,
 } from "../../lib/pawApi";
+
+const mapApplicationCard = (application) => ({
+  id: application.id,
+  applicantName: application.applicantName,
+  dogName: application.dogName,
+  applicationType: application.applicationType,
+  submittedAt: "Just now",
+  homeType: application.homeType || "Home details saved in demo application",
+  experience: application.experience || "Experience pending",
+  status: application.status,
+  isLocal: true,
+});
 
 // Gives shelter staff a queue for reviewing applications and scheduling visits.
 function ReviewApplications() {
@@ -28,19 +41,7 @@ function ReviewApplications() {
         return;
       }
 
-      setLocalApplications(
-        result.applications.map((application) => ({
-          id: application.id,
-          applicantName: application.applicantName,
-          dogName: application.dogName,
-          applicationType: application.applicationType,
-          submittedAt: "Just now",
-          homeType: application.homeType || "Home details saved in demo application",
-          experience: application.experience || "Experience pending",
-          status: application.status,
-          isLocal: true,
-        }))
-      );
+      setLocalApplications(result.applications.map(mapApplicationCard));
       
       setIsLoading(false);
     };
@@ -62,17 +63,7 @@ function ReviewApplications() {
   const handleStatusChange = async (applicationId, status) => {
     const nextApplications = await updateApplicationStatus(applicationId, status);
     setLocalApplications(
-      nextApplications.map((application) => ({
-        id: application.id,
-        applicantName: application.applicantName,
-        dogName: application.dogName,
-        applicationType: application.applicationType,
-        submittedAt: "Just now",
-        homeType: application.homeType || "Home details saved in demo application",
-        experience: application.experience || "Experience pending",
-        status: application.status,
-        isLocal: true,
-      }))
+      filterApplicationsForCurrentUser(nextApplications, "shelter").map(mapApplicationCard)
     );
   };
 
@@ -88,17 +79,7 @@ function ReviewApplications() {
     if (application.isLocal) {
       const nextApplications = deleteDeclinedApplication(application.id);
       setLocalApplications(
-        nextApplications.map((item) => ({
-          id: item.id,
-          applicantName: item.applicantName,
-          dogName: item.dogName,
-          applicationType: item.applicationType,
-          submittedAt: "Just now",
-          homeType: item.homeType || "Home details saved in demo application",
-          experience: item.experience || "Experience pending",
-          status: item.status,
-          isLocal: true,
-        }))
+        filterApplicationsForCurrentUser(nextApplications, "shelter").map(mapApplicationCard)
       );
       return;
     }

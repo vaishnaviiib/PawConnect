@@ -9,6 +9,8 @@ const GENERAL_APPLICATION_KEY = "pawconnectGeneralApplication";
 const SUBMITTED_APPLICATIONS_KEY = "pawconnectSubmittedApplications";
 const SHELTER_DOGS_KEY = "pawconnectShelterDogs";
 const APPOINTMENTS_KEY = "pawconnectAppointments";
+export const MOCK_SHELTER_ID = "mock-shelter-1";
+const DEFAULT_SHELTER_NAME = "Lone Star Rescue";
 
 // Guards local helper logic that expects plain objects.
 const isObject = (value) => typeof value === "object" && value !== null;
@@ -85,8 +87,8 @@ const normalizeDog = (dog) => {
     specialNeeds: dog.specialNeeds || "",
     adoptionType: dog.adoptionType || "",
     status: dog.status || "",
-    shelter: dog.shelter || "Lone Star Rescue",
-    shelterId: dog.shelterId || "",
+    shelter: dog.shelter || dog.shelterName || DEFAULT_SHELTER_NAME,
+    shelterId: dog.shelterId || MOCK_SHELTER_ID,
     source: dog.source || "local",
   };
 };
@@ -97,9 +99,11 @@ const normalizeApplication = (application) => {
 
   return {
     id: application.id || application._id || `application-${Date.now()}`,
-    status: application.status || "Pending",
+    status: application.status || "Submitted",
     applicationType: application.applicationType || "Adoption",
     applicantName: application.applicantName || "",
+    applicantId: application.applicantId || application.userId || application.applicant?._id || "",
+    userId: application.userId || application.applicantId || application.applicant?._id || "",
     email: application.email || "",
     phone: application.phone || "",
     dogId: populatedDog?._id || application.dogId || "",
@@ -109,8 +113,9 @@ const normalizeApplication = (application) => {
       application.dogImage ||
       (Array.isArray(populatedDog?.photos) ? populatedDog.photos[0] : "") ||
       mockDogs[0].image,
-    shelter: application.shelter || "Lone Star Rescue",
-    shelterId: application.shelterId || "",
+    shelter: application.shelter || application.shelterName || DEFAULT_SHELTER_NAME,
+    shelterName: application.shelterName || application.shelter || DEFAULT_SHELTER_NAME,
+    shelterId: application.shelterId || populatedDog?.shelterId || MOCK_SHELTER_ID,
     createdAt: application.createdAt || new Date().toISOString(),
     source: application.source || "local",
     homeType: application.homeType || application.livingSituation || "",
@@ -169,6 +174,53 @@ const getStoredUsersByRole = () => readJson(USERS_BY_ROLE_KEY, {});
 
 const saveStoredUsersByRole = (usersByRole) => {
   writeJson(USERS_BY_ROLE_KEY, usersByRole);
+};
+
+const getAllowedShelterIds = (currentUser) => {
+  const allowedShelterIds = new Set([MOCK_SHELTER_ID]);
+  const currentShelterId = String(currentUser?._id || "");
+
+  if (currentShelterId) {
+    allowedShelterIds.add(currentShelterId);
+  }
+
+  return allowedShelterIds;
+};
+
+export const filterApplicationsForCurrentUser = (
+  applications,
+  preferredRole = ""
+) => {
+  const currentUser = getCurrentUser(preferredRole) || getCurrentUser();
+  const normalizedRole = normalizeUserRole(currentUser?.role);
+  const normalizedApplications = applications.map(normalizeApplication);
+
+  if (normalizedRole === "shelter") {
+    const allowedShelterIds = getAllowedShelterIds(currentUser);
+
+    return normalizedApplications.filter((application) =>
+      allowedShelterIds.has(String(application.shelterId || MOCK_SHELTER_ID))
+    );
+  }
+
+  if (normalizedRole === "adopter") {
+    const currentUserId = String(currentUser?._id || "");
+    const currentEmail = String(currentUser?.email || "").toLowerCase();
+
+    return normalizedApplications.filter((application) => {
+      const applicationUserId = String(
+        application.userId || application.applicantId || ""
+      );
+      const applicationEmail = String(application.email || "").toLowerCase();
+
+      return (
+        (currentUserId && applicationUserId === currentUserId) ||
+        (currentEmail && applicationEmail === currentEmail)
+      );
+    });
+  }
+
+  return normalizedApplications;
 };
 
 // Deduplicates merged lists by id while preserving the latest matching entry.
@@ -312,8 +364,8 @@ export const createDogProfile = async (dog) => {
   const currentUser = getCurrentUser("shelter") || getCurrentUser();
   const localDog = normalizeDog({
     ...dog,
-    shelterId: currentUser?._id || "",
-    shelter: currentUser?.name || "Lone Star Rescue",
+    shelterId: currentUser?._id || MOCK_SHELTER_ID,
+    shelter: currentUser?.name || DEFAULT_SHELTER_NAME,
     source: "local",
   });
 
@@ -494,14 +546,17 @@ export const submitDogInterest = async (dog) => {
     applicationType:
       dog.adoptionType && dog.adoptionType !== "Both" ? dog.adoptionType : "Adoption",
     applicantName: currentUser.name,
+    applicantId: currentUser._id || "",
+    userId: currentUser._id || "",
     email: currentUser.email,
     phone: generalApplication.phone,
     dogId: dog.id,
     dogName: dog.name,
     dogBreed: dog.breed,
     dogImage: dog.image,
-    shelter: dog.shelter || "Lone Star Rescue",
-    shelterId: dog.shelterId || "",
+    shelter: dog.shelter || dog.shelterName || DEFAULT_SHELTER_NAME,
+    shelterName: dog.shelter || dog.shelterName || DEFAULT_SHELTER_NAME,
+    shelterId: dog.shelterId || MOCK_SHELTER_ID,
     homeType: `${generalApplication.housingType || "Home pending"}; Yard: ${
       generalApplication.hasYard || "Unknown"
     }`,
@@ -569,7 +624,10 @@ export const submitDogInterest = async (dog) => {
 // Retrieves application data for the current user or shelter, with local fallback.
 export const getApplicationsForUser = async () => {
   const currentUser = getCurrentUser();
-  const localApplications = getSubmittedApplications();
+  const localApplications = filterApplicationsForCurrentUser(
+    getSubmittedApplications(),
+    currentUser?.role
+  );
 
   try {
     if (!isObjectId(currentUser?._id)) {
@@ -586,7 +644,12 @@ export const getApplicationsForUser = async () => {
       : [];
 
     return {
-      applications: dedupeApplications(mergeById([...localApplications, ...apiApplications])),
+      applications: dedupeApplications(
+        filterApplicationsForCurrentUser(
+          mergeById([...localApplications, ...apiApplications]),
+          currentUser?.role
+        )
+      ),
       source: "api",
       error: "",
     };
