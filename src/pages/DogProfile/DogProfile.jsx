@@ -80,12 +80,7 @@ function DogProfile() {
             {dog.name} - {dog.age} yrs
           </h2>
 
-          <p>
-            {dataSource === "api"
-              ? "Live backend profile"
-              : "Sample fallback profile"}
-          </p>
-
+          
           <p>
             <strong>Breed:</strong> {dog.breed}
           </p>

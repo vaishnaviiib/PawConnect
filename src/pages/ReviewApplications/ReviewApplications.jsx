@@ -41,13 +41,7 @@ function ReviewApplications() {
           isLocal: true,
         }))
       );
-      setStatusMessage(
-        result.source === "api"
-          ? "Showing backend applications with local fallback."
-          : result.error
-            ? `Backend unavailable. ${result.error}`
-            : "Showing locally saved applications."
-      );
+      
       setIsLoading(false);
     };
 

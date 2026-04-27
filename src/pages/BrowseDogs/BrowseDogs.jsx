@@ -5,6 +5,10 @@ import BottomNav from "../../components/BottomNav/BottomNav";
 import PhoneLayout from "../../components/PhoneLayout/PhoneLayout";
 import { getDogs } from "../../lib/pawApi";
 
+const CURRENT_DOG_INDEX_KEY = "pawCurrentDogIndex";
+const FAVORITES_KEY = "pawFavorites";
+const SKIPPED_DOGS_KEY = "pawSkippedDogs";
+
 // Drives the swipe-style dog discovery flow, filters, and lightweight favorites.
 function BrowseDogs() {
   const navigate = useNavigate();
@@ -14,8 +18,26 @@ function BrowseDogs() {
   const [selectedBreed, setSelectedBreed] = useState("All");
   const [selectedAge, setSelectedAge] = useState("All");
   const [selectedLocation, setSelectedLocation] = useState("All");
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [favorites, setFavorites] = useState([]);
+  const [currentIndex, setCurrentIndex] = useState(() => {
+    const savedIndex = Number(localStorage.getItem(CURRENT_DOG_INDEX_KEY));
+    return Number.isNaN(savedIndex) || savedIndex < 0 ? 0 : savedIndex;
+  });
+  const [favorites, setFavorites] = useState(() => {
+    try {
+      const savedFavorites = JSON.parse(localStorage.getItem(FAVORITES_KEY));
+      return Array.isArray(savedFavorites) ? savedFavorites : [];
+    } catch {
+      return [];
+    }
+  });
+  const [skippedDogs, setSkippedDogs] = useState(() => {
+    try {
+      const savedSkippedDogs = JSON.parse(localStorage.getItem(SKIPPED_DOGS_KEY));
+      return Array.isArray(savedSkippedDogs) ? savedSkippedDogs : [];
+    } catch {
+      return [];
+    }
+  });
   const [dogs, setDogs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
@@ -41,6 +63,19 @@ function BrowseDogs() {
     };
   }, []);
 
+  useEffect(() => {
+    localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
+  }, [favorites]);
+
+  useEffect(() => {
+    localStorage.setItem(SKIPPED_DOGS_KEY, JSON.stringify(skippedDogs));
+  }, [skippedDogs]);
+
+  useEffect(() => {
+    localStorage.setItem(CURRENT_DOG_INDEX_KEY, String(currentIndex));
+  }, [currentIndex]);
+
+
   // Applies the selected filter values to the available dog list.
   const filteredDogs = useMemo(() => {
     return dogs.filter((dog) => {
@@ -60,10 +95,17 @@ function BrowseDogs() {
 
   useEffect(() => {
     setCurrentIndex((prev) => {
-      if (filteredDogs.length === 0) return 0;
-      return prev >= filteredDogs.length ? 0 : prev;
+      if (filteredDogs.length === 0) {
+        return 0;
+      }
+
+      if (prev >= filteredDogs.length) {
+        return filteredDogs.length - 1;
+      }
+
+      return prev;
     });
-  }, [filteredDogs]);
+  }, [filteredDogs.length]);
 
   // Builds breed options from the current data set instead of hardcoding them.
   const breedOptions = useMemo(
@@ -81,11 +123,15 @@ function BrowseDogs() {
 
   // Advances past the current card without saving it.
   const handleSkip = () => {
-    if (currentIndex < filteredDogs.length - 1) {
-      setCurrentIndex((prev) => prev + 1);
-    } else {
-      setCurrentIndex(filteredDogs.length);
-    }
+    if (currentDog && !skippedDogs.some((dog) => dog.id === currentDog.id)) {
+    setSkippedDogs((prev) => [...prev, currentDog]);
+  }
+
+  if (currentIndex < filteredDogs.length - 1) {
+    setCurrentIndex((prev) => prev + 1);
+  } else {
+    setCurrentIndex(filteredDogs.length);
+  }
   };
 
   // Saves the current dog to favorites and then advances the deck.
@@ -124,17 +170,15 @@ function BrowseDogs() {
 
   // Applies the current filter picks and returns to the main browse tab.
   const applyFilters = () => {
-    setCurrentIndex(0);
     setShowFilters(false);
     setSelectedTab("forYou");
   };
 
-  // Restores the default filter state and returns to the first card.
+  // Restores the default filter state without forcing the browse deck back to the start.
   const clearFilters = () => {
     setSelectedBreed("All");
     setSelectedAge("All");
     setSelectedLocation("All");
-    setCurrentIndex(0);
     setShowFilters(false);
   };
 
@@ -155,7 +199,6 @@ function BrowseDogs() {
           }`}
           onClick={() => {
             setSelectedTab("forYou");
-            setCurrentIndex(0);
           }}
         >
           For you

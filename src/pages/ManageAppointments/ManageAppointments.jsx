@@ -43,7 +43,6 @@ function ManageAppointments() {
           {/* Summary cards surface the day's overall visit workload. */}
           <header className="manage-appointments-header">
             <h1>Manage Appointments ⋆‧°𓏲ּ𝄢</h1>
-            <p>Mock visit scheduling for your shelter team, with soft reminders and status chips.</p>
           </header>
 
           <section className="manage-appointments-summary">
