@@ -36,3 +36,33 @@
 .profile-card p {
   color: #333;
 }
+
+.profile-session-actions {
+  display: grid;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.profile-session-btn,
+.profile-logout-btn {
+  border: none;
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.profile-session-btn {
+  background: #1c1c1c;
+  color: #fff;
+}
+
+.profile-session-btn.active {
+  background: #6b7f3b;
+}
+
+.profile-logout-btn {
+  margin-top: 14px;
+  background: #eee4be;
+  color: #2b2b2b;
+}

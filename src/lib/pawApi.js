@@ -3,6 +3,8 @@ import mockDogs from "../mockData/dogs.js";
 // Centralizes API and local-storage behavior so the UI can work online or offline.
 const API_BASE_URL = "http://127.0.0.1:5000";
 const CURRENT_USER_KEY = "pawconnectCurrentUser";
+const USERS_BY_ROLE_KEY = "pawconnectUsersByRole";
+const ACTIVE_ROLE_KEY = "pawconnectActiveRole";
 const GENERAL_APPLICATION_KEY = "pawconnectGeneralApplication";
 const SUBMITTED_APPLICATIONS_KEY = "pawconnectSubmittedApplications";
 const SHELTER_DOGS_KEY = "pawconnectShelterDogs";
@@ -27,6 +29,10 @@ const readJson = (key, fallback) => {
 // Persists structured data in local storage under a stable key.
 const writeJson = (key, value) => {
   localStorage.setItem(key, JSON.stringify(value));
+};
+
+const removeJson = (key) => {
+  localStorage.removeItem(key);
 };
 
 // Normalizes backend error payloads into a single message string.
@@ -157,6 +163,14 @@ const dedupeApplications = (applications) => {
   });
 };
 
+const normalizeUserRole = (role) => (typeof role === "string" ? role.toLowerCase() : "");
+
+const getStoredUsersByRole = () => readJson(USERS_BY_ROLE_KEY, {});
+
+const saveStoredUsersByRole = (usersByRole) => {
+  writeJson(USERS_BY_ROLE_KEY, usersByRole);
+};
+
 // Deduplicates merged lists by id while preserving the latest matching entry.
 const mergeById = (items) => {
   const seen = new Map();
@@ -166,11 +180,59 @@ const mergeById = (items) => {
   return Array.from(seen.values());
 };
 
-export const getCurrentUser = () => readJson(CURRENT_USER_KEY, null);
+export const getCurrentUser = (preferredRole = "") => {
+  const currentUser = readJson(CURRENT_USER_KEY, null);
+  const normalizedPreferredRole = normalizeUserRole(preferredRole);
+
+  if (!normalizedPreferredRole) {
+    return currentUser;
+  }
+
+  const usersByRole = getStoredUsersByRole();
+  return (
+    usersByRole[normalizedPreferredRole] ||
+    (normalizeUserRole(currentUser?.role) === normalizedPreferredRole ? currentUser : null)
+  );
+};
+
+export const getSavedUserForRole = (role) => {
+  const normalizedRole = normalizeUserRole(role);
+  return normalizedRole ? getStoredUsersByRole()[normalizedRole] || null : null;
+};
 
 // Saves the currently signed-in demo user for later screens.
 export const saveCurrentUser = (value) => {
-  writeJson(CURRENT_USER_KEY, value);
+  const normalizedRole = normalizeUserRole(value?.role);
+  const nextUser = normalizedRole ? { ...value, role: normalizedRole } : value;
+
+  writeJson(CURRENT_USER_KEY, nextUser);
+
+  if (!normalizedRole) {
+    return;
+  }
+
+  saveStoredUsersByRole({
+    ...getStoredUsersByRole(),
+    [normalizedRole]: nextUser,
+  });
+  localStorage.setItem(ACTIVE_ROLE_KEY, normalizedRole);
+};
+
+export const switchCurrentUserRole = (role) => {
+  const nextUser = getSavedUserForRole(role);
+
+  if (!nextUser) {
+    return null;
+  }
+
+  writeJson(CURRENT_USER_KEY, nextUser);
+  localStorage.setItem(ACTIVE_ROLE_KEY, normalizeUserRole(role));
+  return nextUser;
+};
+
+export const logoutCurrentUser = () => {
+  removeJson(CURRENT_USER_KEY);
+  removeJson(ACTIVE_ROLE_KEY);
 };
 
 // Attempts backend registration, then falls back to a local-only demo account.
@@ -247,7 +309,7 @@ export const deleteLocalShelterDog = (dogId) => {
 
 // Creates a dog profile through the backend when possible, with local fallback.
 export const createDogProfile = async (dog) => {
-  const currentUser = getCurrentUser();
+  const currentUser = getCurrentUser("shelter") || getCurrentUser();
   const localDog = normalizeDog({
     ...dog,
     shelterId: currentUser?._id || "",
@@ -404,7 +466,7 @@ export const findExistingApplicationForDog = (dog) => {
 
 // Creates a dog-specific application using the saved general application answers.
 export const submitDogInterest = async (dog) => {
-  const currentUser = getCurrentUser();
+  const currentUser = getCurrentUser("adopter") || getCurrentUser();
   const generalApplication = getGeneralApplication();
 
   if (!isObject(currentUser) || currentUser.role !== "adopter") {

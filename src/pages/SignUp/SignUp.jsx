@@ -46,8 +46,9 @@ function SignUp() {
 
       saveCurrentUser({
         ...payload.user,
+        role: formData.role,
         token: payload.token,
-        source: "local",
+        source: payload.source || payload.user?.source || "local",
       });
 
       setStatus({
