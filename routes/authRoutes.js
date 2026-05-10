@@ -1,3 +1,7 @@
+// written by: vaishnavi boppana
+// tested by: vaishnavi boppana
+// debugged by: vaishnavi boppana
+
 import express from 'express';
 import { registerUser, loginUser, getCurrentUser } from '../controllers/authController.js';
 import { protect } from "../middleware/authMiddleware.js";

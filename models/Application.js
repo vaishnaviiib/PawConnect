@@ -1,3 +1,7 @@
+// written by: vaishnavi boppana
+// tested by: vaishnavi boppana
+// debugged by: vaishnavi boppana
+
 import mongoose from "mongoose";
 
 // Applications connect an adopter, a dog, and the shelter managing that dog.

@@ -1,3 +1,7 @@
+// written by: vaishnavi boppana
+// tested by: vaishnavi boppana
+// debugged by: vaishnavi boppana
+
 import mongoose from "mongoose";
 
 // Each dog belongs to the shelter account that created it.
