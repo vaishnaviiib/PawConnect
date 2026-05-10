@@ -1,4 +1,6 @@
+// Static notification examples that fill the activity screen during demos.
 const notifications = {
+  // Application events mimic approval and pending updates from shelters.
   applications: [
     {
       id: 1,
@@ -24,6 +26,7 @@ const notifications = {
     },
   ],
 
+  // Visit events mimic appointment confirmations across shelters.
   visits: [
     {
       id: 3,

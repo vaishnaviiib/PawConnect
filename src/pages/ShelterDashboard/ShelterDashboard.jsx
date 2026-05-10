@@ -1,106 +1,134 @@
 import "./ShelterDashboard.css";
-import { useMemo } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
+import PhoneLayout from "../../components/PhoneLayout/PhoneLayout";
 import shelterDogs from "../../mockData/shelterDogs";
 import shelterApplications from "../../mockData/shelterApplications";
 import shelterAppointments from "../../mockData/shelterAppointments";
 import {
+  deleteLocalShelterDog,
   getAppointments,
+  getDataMode,
   getLocalShelterDogs,
   getSubmittedApplications,
 } from "../../lib/pawApi";
 
+// Summarizes shelter activity and links staff into the main management flows.
 function ShelterDashboard() {
-  const savedDogs = useMemo(() => getLocalShelterDogs(), []);
+  const apiOnlyMode = getDataMode() === "api";
+  const [savedDogs, setSavedDogs] = useState(() => getLocalShelterDogs());
 
-  const availableCount =
-    shelterDogs.filter((dog) => dog.status === "Available").length + savedDogs.length;
-  const reviewCount = shelterApplications.filter(
-    (application) => application.status === "Needs Review"
-  ).length;
+  // Combines seeded mock counts with locally created data for a fuller demo dashboard.
+  const availableCount = apiOnlyMode
+    ? savedDogs.length
+    : shelterDogs.filter((dog) => dog.status === "Available").length + savedDogs.length;
+  const reviewCount = apiOnlyMode
+    ? 0
+    : shelterApplications.filter((application) => application.status === "Needs Review").length;
   const localReviewCount = getSubmittedApplications().length;
-  const upcomingCount =
-    shelterAppointments.filter((appointment) => appointment.status !== "Reschedule").length +
-    getAppointments().length;
+  const upcomingCount = apiOnlyMode
+    ? getAppointments().length
+    : shelterAppointments.filter((appointment) => appointment.status !== "Reschedule").length +
+      getAppointments().length;
+
+  const handleDeleteDog = (dogId) => {
+    const isConfirmed = window.confirm("Are you sure you want to delete this dog listing?");
+
+    if (!isConfirmed) {
+      return;
+    }
+
+    setSavedDogs(deleteLocalShelterDog(dogId));
+  };
 
   return (
-    <main className="shelter-dashboard-page">
-      <section className="shelter-dashboard-shell">
-        <div className="shelter-dashboard-status">
-          <span>9:41</span>
-          <span>Shelter View</span>
-        </div>
+    <PhoneLayout className="shelter-dashboard-page">
+      <main className="shelter-dashboard-shell">
+          {/* Hero copy frames the shelter dashboard as an operational home base. */}
+          <header className="shelter-dashboard-hero">
+            <p className="shelter-dashboard-kicker">PawConnect Shelter</p>
+            <h1>Lone Star Rescue</h1>
+            <p>
+              Track dog profiles, review applicants, and keep visit schedules moving.
+            </p>
+          </header>
 
-        <header className="shelter-dashboard-hero">
-          <p className="shelter-dashboard-kicker">PawConnect Shelter</p>
-          <h1>Lone Star Rescue</h1>
-          <p>
-            Track dog profiles, review applicants, and keep visit schedules moving.
-          </p>
-        </header>
+          {/* High-level counts surface the shelter's current workload at a glance. */}
+          <section className="shelter-dashboard-metrics">
+            <article className="shelter-metric-card">
+              <span className="shelter-metric-label">Available dogs</span>
+              <strong>{availableCount}</strong>
+            </article>
+            <article className="shelter-metric-card">
+              <span className="shelter-metric-label">Needs review</span>
+              <strong>{reviewCount + localReviewCount}</strong>
+            </article>
+            <article className="shelter-metric-card">
+              <span className="shelter-metric-label">Upcoming visits</span>
+              <strong>{upcomingCount}</strong>
+            </article>
+          </section>
 
-        <section className="shelter-dashboard-metrics">
-          <article className="shelter-metric-card">
-            <span className="shelter-metric-label">Available dogs</span>
-            <strong>{availableCount}</strong>
-          </article>
-          <article className="shelter-metric-card">
-            <span className="shelter-metric-label">Needs review</span>
-            <strong>{reviewCount + localReviewCount}</strong>
-          </article>
-          <article className="shelter-metric-card">
-            <span className="shelter-metric-label">Upcoming visits</span>
-            <strong>{upcomingCount}</strong>
-          </article>
-        </section>
+          {/* Action cards route staff into dog creation, review, and scheduling tasks. */}
+          <nav className="shelter-dashboard-actions" aria-label="Shelter actions">
+            <Link className="shelter-action-card" to="/create-dog">
+              <span>Create dog profile</span>
+              <strong>Add a new listing ꕤ｡˚⋆</strong>
+            </Link>
+            <Link className="shelter-action-card" to="/review-applications">
+              <span>Review applications</span>
+              <strong>See applicant queue ꕤ｡˚⋆</strong>
+            </Link>
+            <Link className="shelter-action-card" to="/manage-appointments">
+              <span>Manage visits</span>
+              <strong>Plan your week ꕤ｡˚⋆</strong>
+            </Link>
+          </nav>
 
-        <nav className="shelter-dashboard-actions" aria-label="Shelter actions">
-          <Link className="shelter-action-card" to="/create-dog">
-            <span>Create dog profile</span>
-            <strong>Add a new listing</strong>
-          </Link>
-          <Link className="shelter-action-card" to="/review-applications">
-            <span>Review applications</span>
-            <strong>See applicant queue</strong>
-          </Link>
-          <Link className="shelter-action-card" to="/manage-appointments">
-            <span>Manage visits</span>
-            <strong>Plan your week</strong>
-          </Link>
-        </nav>
-
-        <section className="shelter-dashboard-section">
-          <div className="shelter-section-heading">
-            <h2>My Dog Listings</h2>
-            <Link to="/create-dog">Add Dog Profile</Link>
-          </div>
-          <div className="shelter-dog-list">
-            {savedDogs.length > 0 ? (
-              savedDogs.map((dog) => (
-                <article key={dog.id} className="shelter-dog-card">
-                  <img src={dog.image || shelterDogs[0].image} alt={dog.name} />
-                  <div className="shelter-dog-copy">
-                    <div>
-                      <h3>{dog.name}</h3>
-                      <p>
-                        {dog.breed} · {dog.age} yrs
-                      </p>
+          {/* Locally created shelter dogs appear here alongside the dashboard summary. */}
+          <section className="shelter-dashboard-section">
+            <div className="shelter-section-heading">
+              <h2>My Dog Listings</h2>
+              <Link to="/create-dog">Add Dog Profile</Link>
+            </div>
+            <div className="shelter-dog-list">
+              {savedDogs.length > 0 ? (
+                savedDogs.map((dog) => (
+                  <article key={dog.id} className="shelter-dog-card">
+                    <img
+                      src={dog.image || dog.photos?.[0] || shelterDogs[0].image}
+                      alt={dog.name}
+                    />
+                    <div className="shelter-dog-copy">
+                      <div className="shelter-dog-copy-top">
+                        <h3>{dog.name}</h3>
+                        <button
+                          type="button"
+                          className="shelter-delete-btn"
+                          onClick={() => handleDeleteDog(dog.id)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                      <div>
+                        <p>{dog.breed}</p>
+                      </div>
+                      <span className="shelter-status-pill">{dog.status}</span>
+                      <p>{dog.age} yrs</p>
+                      <p>{dog.location}</p>
                     </div>
-                    <span className="shelter-status-pill">{dog.status}</span>
-                    <p>{dog.location}</p>
-                  </div>
+                  </article>
+                ))
+              ) : (
+                <article className="shelter-empty-card">
+                  <h3>No saved mock dog profiles yet</h3>
+                  <p>Create a new dog listing to see it appear here.</p>
                 </article>
-              ))
-            ) : (
-              <article className="shelter-empty-card">
-                <h3>No saved mock dog profiles yet</h3>
-                <p>Create a new dog listing to see it appear here.</p>
-              </article>
-            )}
-          </div>
-        </section>
-      </section>
-    </main>
+              )}
+            </div>
+          </section>
+      </main>
+    </PhoneLayout>
   );
 }
 

@@ -1,18 +1,35 @@
-import mockDogs from "../mockData/dogs";
+import mockDogs from "../mockData/dogs.js";
 
+// Centralizes API and local-storage behavior so the UI can work online or offline.
 const API_BASE_URL =
-  import.meta.env.VITE_API_URL ??
-  (import.meta.env.DEV ? "" : "http://127.0.0.1:5000");
+  import.meta.env.VITE_API_BASE_URL ||
+  import.meta.env.VITE_API_URL ||
+  "http://127.0.0.1:5000";
+const DATA_MODE = (import.meta.env.VITE_DATA_MODE || "hybrid").toLowerCase();
+const API_ONLY_MODE = DATA_MODE === "api";
+const MOCK_ONLY_MODE = DATA_MODE === "mock";
 const CURRENT_USER_KEY = "pawconnectCurrentUser";
+const USERS_BY_ROLE_KEY = "pawconnectUsersByRole";
+const ACTIVE_ROLE_KEY = "pawconnectActiveRole";
 const GENERAL_APPLICATION_KEY = "pawconnectGeneralApplication";
 const SUBMITTED_APPLICATIONS_KEY = "pawconnectSubmittedApplications";
 const SHELTER_DOGS_KEY = "pawconnectShelterDogs";
 const APPOINTMENTS_KEY = "pawconnectAppointments";
+const APPOINTMENTS_FEATURE_MESSAGE =
+  "Appointments are demo-only in API mode until backend endpoints are connected.";
 
+export const getDataMode = () => DATA_MODE;
+export const isApiMode = () => API_ONLY_MODE;
+export const isMockMode = () => MOCK_ONLY_MODE;
+export const supportsApiAppointments = () => false;
+
+// Guards local helper logic that expects plain objects.
 const isObject = (value) => typeof value === "object" && value !== null;
 
+// Checks whether a value looks like a Mongo-style object id before API calls.
 const isObjectId = (value) => typeof value === "string" && /^[a-f0-9]{24}$/i.test(value);
 
+// Reads JSON data from local storage and falls back safely on parse failure.
 const readJson = (key, fallback) => {
   try {
     const value = localStorage.getItem(key);
@@ -22,10 +39,16 @@ const readJson = (key, fallback) => {
   }
 };
 
+// Persists structured data in local storage under a stable key.
 const writeJson = (key, value) => {
   localStorage.setItem(key, JSON.stringify(value));
 };
 
+const removeJson = (key) => {
+  localStorage.removeItem(key);
+};
+
+// Normalizes backend error payloads into a single message string.
 const getErrorMessage = async (response) => {
   const status = response.status;
   const statusText = response.statusText || "";
@@ -55,6 +78,7 @@ const getErrorMessage = async (response) => {
   return fallback;
 };
 
+// Wraps fetch with the app's API base URL and shared JSON handling.
 const apiFetch = async (path, options = {}) => {
   const { withAuth, ...fetchOptions } = options;
   const headers = {
@@ -81,6 +105,7 @@ const apiFetch = async (path, options = {}) => {
   return response.json();
 };
 
+// Converts backend or mock dog data into the shape expected by the UI.
 const normalizeDog = (dog) => {
   const firstPhoto =
     Array.isArray(dog.photos) && dog.photos.length > 0
@@ -109,6 +134,7 @@ const normalizeDog = (dog) => {
   };
 };
 
+// Aligns application records from different sources into one frontend model.
 const normalizeApplication = (application) => {
   const populatedDog = isObject(application.dogId) ? application.dogId : null;
 
@@ -136,6 +162,15 @@ const normalizeApplication = (application) => {
   };
 };
 
+const normalizeAppointmentStatus = (status) => {
+  if (status === "Pending") {
+    return "Requested";
+  }
+
+  return status || "Confirmed";
+};
+
+// Standardizes appointment records for the shelter scheduling screens.
 const normalizeAppointment = (appointment) => ({
   id: appointment.id || `appointment-${Date.now()}`,
   applicationId: appointment.applicationId || "",
@@ -143,11 +178,43 @@ const normalizeAppointment = (appointment) => ({
   visitorName: appointment.visitorName || "Applicant",
   slot: appointment.slot || "",
   type: appointment.type || "Meet and greet",
-  status: appointment.status || "Confirmed",
+  status: normalizeAppointmentStatus(appointment.status),
   shelter: appointment.shelter || "Lone Star Rescue",
   dogImage: appointment.dogImage || mockDogs[0].image,
 });
 
+const normalizeApplicationStatus = (status) =>
+  status === "Rejected" ? "Declined" : status || "Pending";
+
+const getApplicationDedupKey = (application) => {
+  const dogKey = application.dogId || application.dogName || application.id;
+  return `${String(dogKey).toLowerCase()}::${normalizeApplicationStatus(application.status)}`;
+};
+
+const dedupeApplications = (applications) => {
+  const seen = new Set();
+
+  return applications.filter((application) => {
+    const key = getApplicationDedupKey(application);
+
+    if (seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+  });
+};
+
+const normalizeUserRole = (role) => (typeof role === "string" ? role.toLowerCase() : "");
+
+const getStoredUsersByRole = () => readJson(USERS_BY_ROLE_KEY, {});
+
+const saveStoredUsersByRole = (usersByRole) => {
+  writeJson(USERS_BY_ROLE_KEY, usersByRole);
+};
+
+// Deduplicates merged lists by id while preserving the latest matching entry.
 const mergeById = (items) => {
   const seen = new Map();
   items.forEach((item) => {
@@ -156,13 +223,86 @@ const mergeById = (items) => {
   return Array.from(seen.values());
 };
 
-export const getCurrentUser = () => readJson(CURRENT_USER_KEY, null);
+const canUseLocalFallback = () => !API_ONLY_MODE;
 
-export const saveCurrentUser = (value) => {
-  writeJson(CURRENT_USER_KEY, value);
+export const getCurrentUser = (preferredRole = "") => {
+  const currentUser = readJson(CURRENT_USER_KEY, null);
+  const normalizedPreferredRole = normalizeUserRole(preferredRole);
+
+  if (!normalizedPreferredRole) {
+    return currentUser;
+  }
+
+  const usersByRole = getStoredUsersByRole();
+  return (
+    usersByRole[normalizedPreferredRole] ||
+    (normalizeUserRole(currentUser?.role) === normalizedPreferredRole ? currentUser : null)
+  );
 };
 
+export const getSavedUserForRole = (role) => {
+  const normalizedRole = normalizeUserRole(role);
+  return normalizedRole ? getStoredUsersByRole()[normalizedRole] || null : null;
+};
+
+// Saves the currently signed-in demo user for later screens.
+export const saveCurrentUser = (value) => {
+  const normalizedRole = normalizeUserRole(value?.role);
+  const nextUser = normalizedRole ? { ...value, role: normalizedRole } : value;
+
+  writeJson(CURRENT_USER_KEY, nextUser);
+
+  if (!normalizedRole) {
+    return;
+  }
+
+  saveStoredUsersByRole({
+    ...getStoredUsersByRole(),
+    [normalizedRole]: nextUser,
+  });
+  localStorage.setItem(ACTIVE_ROLE_KEY, normalizedRole);
+};
+
+export const switchCurrentUserRole = (role) => {
+  const nextUser = getSavedUserForRole(role);
+
+  if (!nextUser) {
+    return null;
+  }
+
+  writeJson(CURRENT_USER_KEY, nextUser);
+  localStorage.setItem(ACTIVE_ROLE_KEY, normalizeUserRole(role));
+  return nextUser;
+};
+
+export const logoutCurrentUser = () => {
+  removeJson(CURRENT_USER_KEY);
+  removeJson(ACTIVE_ROLE_KEY);
+};
+
+// Attempts backend registration, then falls back to a local-only demo account.
 export const registerUser = async ({ name, email, phone, password, role }) => {
+  if (MOCK_ONLY_MODE) {
+    const user = {
+      _id: `local-user-${Date.now()}`,
+      name,
+      email,
+      phone: phone || "",
+      role,
+      token: "",
+      source: "local",
+    };
+    saveCurrentUser(user);
+    return {
+      success: true,
+      message: "Mock mode enabled. Account created locally for demo flow.",
+      user,
+      token: "",
+      source: "local",
+      error: "",
+    };
+  }
+
   try {
     const payload = await apiFetch("/auth/register", {
       method: "POST",
@@ -186,6 +326,10 @@ export const registerUser = async ({ name, email, phone, password, role }) => {
       error: "",
     };
   } catch (error) {
+    if (API_ONLY_MODE) {
+      throw error;
+    }
+
     const user = {
       _id: `local-user-${Date.now()}`,
       name,
@@ -209,24 +353,45 @@ export const registerUser = async ({ name, email, phone, password, role }) => {
   }
 };
 
+// Stores the adopter's reusable application answers for later submissions.
 export const saveGeneralApplication = (application) => {
+  if (API_ONLY_MODE) {
+    throw new Error(
+      "General application storage is local-only right now. Disable API mode or wire backend support."
+    );
+  }
+
   writeJson(GENERAL_APPLICATION_KEY, {
     ...application,
     updatedAt: new Date().toISOString(),
   });
 };
 
-export const getGeneralApplication = () => readJson(GENERAL_APPLICATION_KEY, null);
+export const getGeneralApplication = () => {
+  if (API_ONLY_MODE) {
+    return null;
+  }
+  return readJson(GENERAL_APPLICATION_KEY, null);
+};
 
+// Reads any shelter-created dogs that were saved locally in the browser.
 export const getLocalShelterDogs = () => readJson(SHELTER_DOGS_KEY, []).map(normalizeDog);
 
+// Prepends a locally created shelter dog so it appears immediately in the UI.
 export const saveLocalShelterDog = (dog) => {
   const existingDogs = getLocalShelterDogs();
   writeJson(SHELTER_DOGS_KEY, [normalizeDog(dog), ...existingDogs]);
 };
 
+export const deleteLocalShelterDog = (dogId) => {
+  const nextDogs = getLocalShelterDogs().filter((dog) => String(dog.id) !== String(dogId));
+  writeJson(SHELTER_DOGS_KEY, nextDogs);
+  return nextDogs;
+};
+
+// Creates a dog profile through the backend when possible, with local fallback.
 export const createDogProfile = async (dog) => {
-  const currentUser = getCurrentUser();
+  const currentUser = getCurrentUser("shelter") || getCurrentUser();
   const localDog = normalizeDog({
     ...dog,
     shelterId: currentUser?._id || "",
@@ -235,6 +400,10 @@ export const createDogProfile = async (dog) => {
   });
 
   try {
+    if (MOCK_ONLY_MODE) {
+      throw new Error("Mock mode enabled.");
+    }
+
     if (!currentUser?.token) {
       throw new Error("No backend token available for dog creation.");
     }
@@ -254,7 +423,7 @@ export const createDogProfile = async (dog) => {
         description: dog.description,
         specialNeeds: dog.specialNeeds || "",
         healthInfo: dog.healthInfo,
-        photos: dog.photos.map((photo) => photo.previewUrl),
+        photos: dog.photos.map((photo) => photo?.previewUrl || photo),
       }),
     });
 
@@ -273,6 +442,14 @@ export const createDogProfile = async (dog) => {
       error: "",
     };
   } catch (error) {
+    if (!canUseLocalFallback()) {
+      return {
+        dog: null,
+        source: "api",
+        error: error.message,
+      };
+    }
+
     saveLocalShelterDog(localDog);
     return {
       dog: localDog,
@@ -282,21 +459,34 @@ export const createDogProfile = async (dog) => {
   }
 };
 
+// Loads dogs from the backend and merges them with any locally created listings.
 export const getDogs = async () => {
   const localDogs = getLocalShelterDogs();
 
   try {
+    if (MOCK_ONLY_MODE) {
+      throw new Error("Mock mode enabled.");
+    }
+
     const payload = await apiFetch("/dogs");
     const apiDogs = Array.isArray(payload.data)
       ? payload.data.map((dog) => normalizeDog({ ...dog, source: "api" }))
       : [];
 
     return {
-      dogs: mergeById([...localDogs, ...apiDogs]),
+      dogs: API_ONLY_MODE ? apiDogs : mergeById([...localDogs, ...apiDogs]),
       source: "api",
       error: "",
     };
   } catch (error) {
+    if (!canUseLocalFallback()) {
+      return {
+        dogs: [],
+        source: "api",
+        error: error.message,
+      };
+    }
+
     return {
       dogs: mergeById([...localDogs, ...mockDogs.map((dog) => normalizeDog(dog))]),
       source: "local",
@@ -305,8 +495,11 @@ export const getDogs = async () => {
   }
 };
 
+// Finds a single dog, preferring local creations before backend or mock data.
 export const getDogById = async (id) => {
-  const localDog = getLocalShelterDogs().find((dog) => String(dog.id) === String(id));
+  const localDog = API_ONLY_MODE
+    ? null
+    : getLocalShelterDogs().find((dog) => String(dog.id) === String(id));
 
   if (localDog) {
     return {
@@ -317,6 +510,10 @@ export const getDogById = async (id) => {
   }
 
   try {
+    if (MOCK_ONLY_MODE) {
+      throw new Error("Mock mode enabled.");
+    }
+
     const payload = await apiFetch(`/dogs/${id}`);
     return {
       dog: payload.data ? normalizeDog({ ...payload.data, source: "api" }) : null,
@@ -324,6 +521,14 @@ export const getDogById = async (id) => {
       error: "",
     };
   } catch (error) {
+    if (!canUseLocalFallback()) {
+      return {
+        dog: null,
+        source: "api",
+        error: error.message,
+      };
+    }
+
     const fallbackDog = mockDogs.find((dog) => String(dog.id) === String(id));
     return {
       dog: fallbackDog ? normalizeDog(fallbackDog) : null,
@@ -334,14 +539,52 @@ export const getDogById = async (id) => {
 };
 
 export const getSubmittedApplications = () =>
-  readJson(SUBMITTED_APPLICATIONS_KEY, []).map(normalizeApplication);
+  dedupeApplications(readJson(SUBMITTED_APPLICATIONS_KEY, []).map(normalizeApplication));
 
+// Persists the normalized application list used by adopter and shelter flows.
 const saveSubmittedApplications = (applications) => {
-  writeJson(SUBMITTED_APPLICATIONS_KEY, applications.map(normalizeApplication));
+  writeJson(
+    SUBMITTED_APPLICATIONS_KEY,
+    dedupeApplications(applications.map(normalizeApplication))
+  );
 };
 
+export const deleteDeclinedApplication = (applicationId) => {
+  const existingApplications = getSubmittedApplications();
+  const application = existingApplications.find((item) => item.id === applicationId);
+
+  if (!application) {
+    return existingApplications;
+  }
+
+  if (!["Declined", "Rejected"].includes(application.status)) {
+    throw new Error("Only declined applications can be deleted.");
+  }
+
+  const nextApplications = existingApplications.filter((item) => item.id !== applicationId);
+  saveSubmittedApplications(nextApplications);
+  return nextApplications;
+};
+
+export const findExistingApplicationForDog = (dog) => {
+  const dogId = String(dog.id || "");
+  const dogName = String(dog.name || "").toLowerCase();
+
+  return getSubmittedApplications().find((application) => {
+    const applicationDogId = String(application.dogId || "");
+    const applicationDogName = String(application.dogName || "").toLowerCase();
+
+    return (
+      normalizeApplicationStatus(application.status) !== "Declined" &&
+      ((dogId && applicationDogId && applicationDogId === dogId) ||
+        (dogName && applicationDogName === dogName))
+    );
+  });
+};
+
+// Creates a dog-specific application using the saved general application answers.
 export const submitDogInterest = async (dog) => {
-  const currentUser = getCurrentUser();
+  const currentUser = getCurrentUser("adopter") || getCurrentUser();
   const generalApplication = getGeneralApplication();
 
   if (!isObject(currentUser) || currentUser.role !== "adopter") {
@@ -350,6 +593,17 @@ export const submitDogInterest = async (dog) => {
 
   if (!isObject(generalApplication)) {
     throw new Error("Please save your general application before expressing interest.");
+  }
+
+  const existingApplication = findExistingApplicationForDog(dog);
+
+  if (existingApplication) {
+    return {
+      application: existingApplication,
+      source: existingApplication.source || "local",
+      error: "",
+      isDuplicate: true,
+    };
   }
 
   const localApplication = normalizeApplication({
@@ -377,6 +631,10 @@ export const submitDogInterest = async (dog) => {
   });
 
   try {
+    if (MOCK_ONLY_MODE) {
+      throw new Error("Mock mode enabled.");
+    }
+
     if (
       !isObjectId(currentUser._id) ||
       !isObjectId(String(dog.id)) ||
@@ -418,8 +676,18 @@ export const submitDogInterest = async (dog) => {
       application: apiApplication,
       source: "api",
       error: "",
+      isDuplicate: false,
     };
   } catch (error) {
+    if (!canUseLocalFallback()) {
+      return {
+        application: null,
+        source: "api",
+        error: error.message,
+        isDuplicate: false,
+      };
+    }
+
     const existingApplications = getSubmittedApplications();
     saveSubmittedApplications([localApplication, ...existingApplications]);
 
@@ -427,15 +695,21 @@ export const submitDogInterest = async (dog) => {
       application: localApplication,
       source: "local",
       error: error.message,
+      isDuplicate: false,
     };
   }
 };
 
+// Retrieves application data for the current user or shelter, with local fallback.
 export const getApplicationsForUser = async () => {
   const currentUser = getCurrentUser();
   const localApplications = getSubmittedApplications();
 
   try {
+    if (MOCK_ONLY_MODE) {
+      throw new Error("Mock mode enabled.");
+    }
+
     if (!isObjectId(currentUser?._id)) {
       throw new Error("Backend applications route requires a valid user id.");
     }
@@ -450,21 +724,36 @@ export const getApplicationsForUser = async () => {
       : [];
 
     return {
-      applications: mergeById([...localApplications, ...apiApplications]),
+      applications: API_ONLY_MODE
+        ? dedupeApplications(apiApplications)
+        : dedupeApplications(mergeById([...localApplications, ...apiApplications])),
       source: "api",
       error: "",
     };
   } catch (error) {
+    if (!canUseLocalFallback()) {
+      return {
+        applications: [],
+        source: "api",
+        error: error.message,
+      };
+    }
+
     return {
-      applications: localApplications,
+      applications: dedupeApplications(localApplications),
       source: "local",
       error: error.message,
     };
   }
 };
 
+// Updates application review status and mirrors the change locally if needed.
 export const updateApplicationStatus = async (applicationId, status) => {
   try {
+    if (MOCK_ONLY_MODE) {
+      throw new Error("Mock mode enabled.");
+    }
+
     if (!["Approved", "Declined"].includes(status)) {
       throw new Error("Backend only supports Approved or Rejected status updates.");
     }
@@ -493,7 +782,11 @@ export const updateApplicationStatus = async (applicationId, status) => {
     ]);
     saveSubmittedApplications(nextApplications);
     return nextApplications;
-  } catch {
+  } catch (error) {
+    if (!canUseLocalFallback()) {
+      throw error;
+    }
+
     const nextApplications = getSubmittedApplications().map((application) =>
       application.id === applicationId ? { ...application, status } : application
     );
@@ -502,13 +795,34 @@ export const updateApplicationStatus = async (applicationId, status) => {
   }
 };
 
-export const getAppointments = () => readJson(APPOINTMENTS_KEY, []).map(normalizeAppointment);
+// Returns saved shelter visits in a consistent appointment shape.
+export const getAppointments = () => {
+  if (API_ONLY_MODE) {
+    return [];
+  }
 
-export const scheduleVisit = ({ applicationId, date, time }) => {
+  return readJson(APPOINTMENTS_KEY, []).map(normalizeAppointment);
+};
+
+export const findAppointmentForApplication = (applicationId) =>
+  getAppointments().find((appointment) => appointment.applicationId === applicationId);
+
+// Creates a locally stored visit request for an approved application.
+export const requestVisitAppointment = ({ applicationId, date, time }) => {
+  if (API_ONLY_MODE) {
+    throw new Error(APPOINTMENTS_FEATURE_MESSAGE);
+  }
+
   const application = getSubmittedApplications().find((item) => item.id === applicationId);
 
   if (!application) {
     throw new Error("Application not found.");
+  }
+
+  const existingAppointment = findAppointmentForApplication(applicationId);
+
+  if (existingAppointment) {
+    return existingAppointment;
   }
 
   const nextAppointment = normalizeAppointment({
@@ -518,40 +832,74 @@ export const scheduleVisit = ({ applicationId, date, time }) => {
     visitorName: application.applicantName,
     slot: `${date} at ${time}`,
     type: "Meet and greet",
-    status: "Confirmed",
+    status: "Requested",
     shelter: application.shelter,
     dogImage: application.dogImage,
   });
 
   const existingAppointments = getAppointments();
   writeJson(APPOINTMENTS_KEY, [nextAppointment, ...existingAppointments]);
-  saveSubmittedApplications(
-    getSubmittedApplications().map((item) =>
-      item.id === applicationId ? { ...item, status: "Visit Scheduled" } : item
-    )
-  );
 
   return nextAppointment;
 };
 
+// Updates a locally stored visit request after the shelter reviews it.
+export const updateAppointmentStatus = (appointmentId, status) => {
+  if (API_ONLY_MODE) {
+    throw new Error(APPOINTMENTS_FEATURE_MESSAGE);
+  }
+
+  const nextAppointments = getAppointments().map((appointment) =>
+    appointment.id === appointmentId ? { ...appointment, status } : appointment
+  );
+
+  writeJson(APPOINTMENTS_KEY, nextAppointments);
+
+  const updatedAppointment = nextAppointments.find((appointment) => appointment.id === appointmentId);
+
+  if (updatedAppointment?.applicationId && status === "Confirmed") {
+    saveSubmittedApplications(
+      getSubmittedApplications().map((application) =>
+        application.id === updatedAppointment.applicationId
+          ? { ...application, status: "Visit Scheduled" }
+          : application
+      )
+    );
+  }
+
+  return nextAppointments.map(normalizeAppointment);
+};
+
+// Backward-compatible helper for any older visit-scheduling entry points.
+export const scheduleVisit = ({ applicationId, date, time }) =>
+  requestVisitAppointment({ applicationId, date, time });
+
+// Builds notification items from saved application activity.
 export const getApplicationNotifications = () => {
   return getSubmittedApplications().map((application) => ({
     id: application.id,
+    applicationId: application.id,
     shelter: application.shelter,
     status: `${application.dogName} application ${application.status.toLowerCase()}`,
     time: "now",
     image: application.dogImage || mockDogs[0].image,
     avatar:
       "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80",
-    type: "pending",
+    type: application.status.toLowerCase().replace(/\s+/g, "-"),
   }));
 };
 
+// Builds notification items from scheduled shelter visits.
 export const getVisitNotifications = () => {
   return getAppointments().map((appointment) => ({
     id: appointment.id,
     shelter: appointment.shelter,
-    status: `Visit scheduled for ${appointment.slot}`,
+    status:
+      appointment.status === "Requested"
+        ? `Visit request sent for ${appointment.slot}`
+        : appointment.status === "Declined"
+          ? `Visit request declined for ${appointment.slot}`
+          : `Visit scheduled for ${appointment.slot}`,
     time: "now",
     image: appointment.dogImage || mockDogs[0].image,
     avatar:

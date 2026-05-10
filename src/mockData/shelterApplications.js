@@ -1,3 +1,4 @@
+// Mock shelter-side applications displayed on the review queue.
 const shelterApplications = [
   {
     id: 201,

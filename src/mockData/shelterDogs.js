@@ -1,3 +1,4 @@
+// Mock shelter dog listings used to populate the dashboard and previews.
 const shelterDogs = [
   {
     id: 101,

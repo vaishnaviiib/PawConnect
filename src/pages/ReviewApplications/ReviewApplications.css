@@ -1,20 +1,31 @@
-.review-applications-page {
-  min-height: 100vh;
+.phone-layout-device.review-applications-page {
+  background: #dce7f6;
+  border-radius: 32px;
+  overflow: hidden;
+}
+
+.phone-layout-device.review-applications-page .phone-layout-content {
   background: #dce7f6;
   padding: 24px 16px 40px;
 }
 
 .review-applications-shell {
-  max-width: 420px;
-  margin: 0 auto;
+  width: 100%;
+  min-height: 100%;
 }
 
-.review-applications-status {
-  display: flex;
-  justify-content: space-between;
-  font-size: 14px;
+.shelter-back-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin: 0 0 16px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #162031;
+  font-size: 15px;
   font-weight: 600;
-  margin-bottom: 18px;
+  cursor: pointer;
 }
 
 .review-applications-header {
@@ -28,7 +39,8 @@
 .review-applications-header h1 {
   margin: 0 0 8px;
   color: #162031;
-  font-size: 40px;
+  font-size: 35px;
+  line-height: 1;
 }
 
 .review-applications-header p {
@@ -47,8 +59,8 @@
 }
 
 .review-application-card {
-  background: #fffdf8;
-  border: 1px solid #eee1c9;
+  background: #fdf8ff;
+  border: 1px solid #d8c0de;
   border-radius: 24px;
   padding: 18px;
 }
@@ -64,7 +76,7 @@
 .review-application-top h2,
 .review-application-top p {
   margin: 0;
-
+  color:black;  
 }
 
 .review-application-top p {
@@ -109,7 +121,7 @@
 
 .review-application-actions {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 10px;
   margin-top: 16px;
 }
@@ -129,35 +141,17 @@
   cursor: default;
 }
 
-.review-visit-form {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 14px;
-  color:black; 
+.review-application-delete-row {
+  margin-top: 12px;
 }
 
-.review-visit-form input,
-
-
-.review-visit-form button {
+.review-application-delete-btn {
+  border: 1px solid #d8c7e0;
   border-radius: 14px;
   padding: 12px 14px;
-  font-size: 14px;
-  color:black; 
-}
-
-.review-visit-form input {
-  border: 1px solid #c9d8ee;
-  background: transparent;
-  color:black; 
-}
-
-.review-visit-form button {
-  grid-column: 1 / -1;
-  border: none;
-  background: #5a6f98;
-  color: transparent;
+  background: #fff;
+  color: #5f456d;
   cursor: pointer;
-
+  font-size: 14px;
+  font-weight: 600;
 }

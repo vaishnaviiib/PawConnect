@@ -1,20 +1,19 @@
+.phone-layout-device.profile-page {
+  background: #f7f0c8 !important;
+  border-radius: 36px;
+  overflow: hidden;
+}
+
+.phone-layout-device.profile-page .phone-layout-content {
+  background: #f7f0c8 !important;
+}
+
 .profile-page {
-  min-height: 100vh;
   background: #f7f0c8;
-  padding: 16px 16px 90px;
   font-family: Arial, sans-serif;
 }
 
-.profile-status-bar {
-  display: flex;
-  justify-content: space-between;
-  font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 24px;
-}
-
 .profile-card {
-  max-width: 380px;
   margin: 40px auto 0;
   background: #fff8e6;
   border-radius: 24px;
@@ -24,10 +23,46 @@
 }
 
 .profile-avatar {
-  font-size: 60px;
-  margin-bottom: 12px;
+  font-size: 50px;
+  margin-bottom: 30px;
 }
 
 .profile-card h1 {
   margin-top: 0;
+  color: #000;
+  font-size: 43px;
+}
+
+.profile-card p {
+  color: #333;
+}
+
+.profile-session-actions {
+  display: grid;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.profile-session-btn,
+.profile-logout-btn {
+  border: none;
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.profile-session-btn {
+  background: #1c1c1c;
+  color: #fff;
+}
+
+.profile-session-btn.active {
+  background: #6b7f3b;
+}
+
+.profile-logout-btn {
+  margin-top: 14px;
+  background: #eee4be;
+  color: #2b2b2b;
 }

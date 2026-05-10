@@ -1,3 +1,4 @@
+// Mock appointment records displayed on the shelter scheduling page.
 const shelterAppointments = [
   {
     id: 301,

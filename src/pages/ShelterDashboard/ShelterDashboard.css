@@ -1,25 +1,22 @@
-.shelter-dashboard-page {
-  min-height: 100vh;
-  background: #f7f0c8;
+.phone-layout-device.shelter-dashboard-page {
+  background: #fefefb;
+  border-radius: 32px;
+  overflow: hidden;
+}
+
+.phone-layout-device.shelter-dashboard-page .phone-layout-content {
+  background: #fceffa;
   padding: 24px 16px 40px;
+  border-radius: 24px;
 }
 
 .shelter-dashboard-shell {
-  max-width: 420px;
-  margin: 0 auto;
-}
-
-.shelter-dashboard-status {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 18px;
+  width: 100%;
+  min-height: 100%;
 }
 
 .shelter-dashboard-hero {
-  background: #fff7df;
+  background: #fffdf6;
   border: 1px solid #eadcb1;
   border-radius: 24px;
   padding: 24px;
@@ -79,11 +76,11 @@
 }
 
 .shelter-action-card {
-  background: #dfead8;
-  border: 1px solid #c9d7c2;
+  background: #d9f6f3;
+  border: 1px solid #ffaaf2;
   border-radius: 20px;
   padding: 18px 20px;
-  text-decoration: none;
+  text-decoration: none;  
   color: #1f231b;
 }
 
@@ -168,10 +165,28 @@
   margin: 0;
 }
 
+.shelter-dog-copy-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .shelter-dog-copy p {
   margin-top: 6px;
   color: #574c59;
   line-height: 1.4;
+}
+
+.shelter-delete-btn {
+  border: 1px solid #dfcde4;
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: #fff;
+  color: #5e4871;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 .shelter-status-pill {

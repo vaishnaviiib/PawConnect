@@ -41,7 +41,9 @@ Build the client: `npm run build`, then preview static build: `npm run preview`.
 
 ## Tests
 
-`npm test` — Jest API tests (uses `NODE_ENV=test` and in-memory/test DB per `tests/setup.js`).
+Copy [`.env.test.example`](.env.test.example) to `.env.test` and set `MONGO_URI` (or `MONGO_URL`) to a **dedicated** MongoDB database; Jest connects via [`tests/setup.js`](tests/setup.js) and drops that database after the suite. Ensure MongoDB is running, then:
+
+`npm test` — Jest (API and frontend module tests; `NODE_ENV=test` is set by the test script).
 
 ## Lint
 

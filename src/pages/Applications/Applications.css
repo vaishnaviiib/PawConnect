@@ -1,6 +1,118 @@
-.page-placeholder {
-  padding: 24px;
-  border-radius: 16px;
+.phone-layout-device.applications-page {
+  background: #dfeaf3;
+  border-radius: 32px;
+  overflow: hidden;
+}
+
+.phone-layout-device.applications-page .phone-layout-content {
+  background: #dfeaf3;
+  padding: 16px 16px 90px;
+}
+
+.applications-shell {
+  min-height: 100%;
+}
+
+.applications-hero,
+.applications-empty-state,
+.application-card {
+  padding: 20px;
+  border-radius: 24px;
   background: #ffffff;
   border: 1px solid #dbe4f0;
+  box-shadow: 0 10px 26px rgba(65, 88, 112, 0.08);
+}
+
+.applications-hero h2,
+.applications-empty-state h3,
+.application-card h3 {
+  margin: 0;
+  color: #213040;
+}
+
+.applications-hero p,
+.applications-empty-state p {
+  margin: 8px 0 0;
+  color: #607082;
+  line-height: 1.5;
+}
+
+.applications-list {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.application-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.application-card-top p {
+  margin: 6px 0 0;
+  color: #67778b;
+  line-height: 1.4;
+}
+
+.application-status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 96px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.status-submitted {
+  background: #eef4fb;
+  color: #4a6685;
+}
+
+.status-approved {
+  background: #e6f4ea;
+  color: #2e6a3b;
+}
+
+.status-declined {
+  background: #fbe9ec;
+  color: #8d4955;
+}
+
+.status-visit-scheduled {
+  background: #f4eafb;
+  color: #6a4e8f;
+}
+
+.application-card-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.application-card-meta div {
+  padding: 14px;
+  border-radius: 18px;
+  background: #f7fafc;
+}
+
+.application-card-meta span {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: #738195;
+  text-transform: uppercase;
+}
+
+.application-card-meta strong {
+  color: #213040;
+  font-size: 14px;
+}
+
+.applications-empty-state {
+  margin-top: 18px;
 }

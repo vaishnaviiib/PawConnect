@@ -2,8 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./BrowseDogs.css";
 import BottomNav from "../../components/BottomNav/BottomNav";
+import PhoneLayout from "../../components/PhoneLayout/PhoneLayout";
 import { getDogs } from "../../lib/pawApi";
 
+// Drives the swipe-style dog discovery flow, filters, and lightweight favorites.
 function BrowseDogs() {
   const navigate = useNavigate();
 
@@ -16,22 +18,19 @@ function BrowseDogs() {
   const [favorites, setFavorites] = useState([]);
   const [dogs, setDogs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [dataSource, setDataSource] = useState("");
   const [loadError, setLoadError] = useState("");
 
+  // Loads dog listings once and ignores late responses after unmount.
   useEffect(() => {
     let isMounted = true;
 
     const loadDogListings = async () => {
       const result = await getDogs();
 
-      if (!isMounted) {
-        return;
-      }
+      if (!isMounted) return;
 
       setDogs(result.dogs);
       setIsLoading(false);
-      setDataSource(result.source);
       setLoadError(result.error);
     };
 
@@ -42,11 +41,13 @@ function BrowseDogs() {
     };
   }, []);
 
+  // Applies the selected filter values to the available dog list.
   const filteredDogs = useMemo(() => {
     return dogs.filter((dog) => {
       const breedMatch = selectedBreed === "All" || dog.breed === selectedBreed;
       const locationMatch =
         selectedLocation === "All" || dog.location === selectedLocation;
+
       const ageMatch =
         selectedAge === "All" ||
         (selectedAge === "0-2" && dog.age >= 0 && dog.age <= 2) ||
@@ -65,11 +66,13 @@ function BrowseDogs() {
     return currentIndex >= filteredDogs.length ? 0 : currentIndex;
   }, [filteredDogs, currentIndex]);
 
+  // Builds breed options from the current data set instead of hardcoding them.
   const breedOptions = useMemo(
     () => ["All", ...new Set(dogs.map((dog) => dog.breed).filter(Boolean))],
     [dogs]
   );
 
+  // Builds location options from the current data set instead of hardcoding them.
   const locationOptions = useMemo(
     () => ["All", ...new Set(dogs.map((dog) => dog.location).filter(Boolean))],
     [dogs]
@@ -77,6 +80,7 @@ function BrowseDogs() {
 
   const currentDog = filteredDogs[listIndex];
 
+  // Advances past the current card without saving it.
   const handleSkip = () => {
     if (listIndex < filteredDogs.length - 1) {
       setCurrentIndex(listIndex + 1);
@@ -85,10 +89,9 @@ function BrowseDogs() {
     }
   };
 
+  // Saves the current dog to favorites and then advances the deck.
   const handleLike = () => {
-    if (!currentDog) {
-      return;
-    }
+    if (!currentDog) return;
 
     const alreadyFavorited = favorites.some((dog) => dog.id === currentDog.id);
 
@@ -103,26 +106,31 @@ function BrowseDogs() {
     }
   };
 
+  // Removes a dog from the local favorites tab.
   const removeFavorite = (id) => {
     setFavorites((prev) => prev.filter((dog) => dog.id !== id));
   };
 
+  // Opens the detail page for whichever dog is currently in focus.
   const handleCardClick = () => {
     if (currentDog) {
       navigate(`/dog/${currentDog.id}`);
     }
   };
 
+  // Opens a detail page from the favorites list.
   const handleFavoriteClick = (id) => {
     navigate(`/dog/${id}`);
   };
 
+  // Applies the current filter picks and returns to the main browse tab.
   const applyFilters = () => {
     setCurrentIndex(0);
     setShowFilters(false);
     setSelectedTab("forYou");
   };
 
+  // Restores the default filter state and returns to the first card.
   const clearFilters = () => {
     setSelectedBreed("All");
     setSelectedAge("All");
@@ -132,12 +140,8 @@ function BrowseDogs() {
   };
 
   return (
-    <div className="browse-page">
-      <div className="browse-status-bar">
-        <span>9:41</span>
-        <span>Network</span>
-      </div>
-
+    <PhoneLayout className="browse-page">
+      {/* Tabs switch between filtering controls, the active deck, and favorites. */}
       <div className="browse-tabs">
         <button
           className={`browse-tab-button ${showFilters ? "browse-tab-active" : ""}`}
@@ -147,7 +151,9 @@ function BrowseDogs() {
         </button>
 
         <button
-          className={`browse-tab-button ${selectedTab === "forYou" ? "browse-tab-active" : ""}`}
+          className={`browse-tab-button ${
+            selectedTab === "forYou" ? "browse-tab-active" : ""
+          }`}
           onClick={() => {
             setSelectedTab("forYou");
             setCurrentIndex(0);
@@ -157,7 +163,9 @@ function BrowseDogs() {
         </button>
 
         <button
-          className={`browse-tab-button ${selectedTab === "favorites" ? "browse-tab-active" : ""}`}
+          className={`browse-tab-button ${
+            selectedTab === "favorites" ? "browse-tab-active" : ""
+          }`}
           onClick={() => setSelectedTab("favorites")}
         >
           Favorites
@@ -168,6 +176,7 @@ function BrowseDogs() {
         <div className="filter-panel">
           <h3>Filters</h3>
 
+          {/* Filter inputs narrow the in-memory dog list before rendering cards. */}
           <label>Breed</label>
           <select
             value={selectedBreed}
@@ -216,35 +225,32 @@ function BrowseDogs() {
 
       {selectedTab === "forYou" && (
         <>
-          {isLoading ? (
+          {/* Loading and error states keep the card area stable while data arrives. */}
+          {isLoading && (
             <div className="no-dogs-message">
               <h2>Loading dogs...</h2>
               <p>Fetching the latest listings from PawConnect.</p>
             </div>
-          ) : null}
+          )}
 
-          {!isLoading ? (
+          {!isLoading && loadError && (
             <div className="no-dogs-message">
-              <p>
-                {dataSource === "api"
-                  ? "Showing live dog listings from the backend."
-                  : "Backend unavailable, showing sample dogs."}
-              </p>
-              {loadError ? <p>{loadError}</p> : null}
+              <p>{loadError}</p>
             </div>
-          ) : null}
+          )}
 
-          {!isLoading && currentDog ? (
+          {!isLoading && currentDog && (
             <div className="dog-card">
+              {/* Clicking the image or details opens the full dog profile. */}
               <div className="dog-image-wrapper" onClick={handleCardClick}>
                 <img
-                  src={currentDog.image}
+                  src={currentDog.image || currentDog.photos?.[0]}
                   alt={currentDog.name}
                   className="dog-image"
                 />
-                <div className="dog-decor dog-heart">*</div>
-                <div className="dog-decor dog-crown">+</div>
-                <div className="dog-decor dog-swirl">o</div>
+                <div className="dog-decor dog-heart">₊✩‧₊˚౨ৎ˚₊✩‧₊</div>
+                <div className="dog-decor dog-crown"></div>
+                <div className="dog-decor dog-swirl">⋅°❀⋆.ೃ࿔*:･</div>
               </div>
 
               <div className="dog-details" onClick={handleCardClick}>
@@ -263,11 +269,13 @@ function BrowseDogs() {
                   X
                 </button>
                 <button className="dog-action-btn like-btn" onClick={handleLike}>
-                  ✔
+                  ✓
                 </button>
               </div>
             </div>
-          ) : (
+          )}
+
+          {!isLoading && !currentDog && (
             <div className="no-dogs-message">
               <h2>No matching dogs found</h2>
               <p>Try changing your filters or check back later.</p>
@@ -277,7 +285,12 @@ function BrowseDogs() {
       )}
 
       {selectedTab === "favorites" && (
-        <div className="favorites-list">
+        <div
+          className={`favorites-list ${
+            favorites.length === 0 ? "favorites-list-empty" : ""
+          }`}
+        >
+          {/* Favorites are stored only in local state for this browsing session. */}
           {favorites.length > 0 ? (
             favorites.map((dog) => (
               <div className="favorite-card" key={dog.id}>
@@ -286,7 +299,7 @@ function BrowseDogs() {
                   onClick={() => handleFavoriteClick(dog.id)}
                 >
                   <img
-                    src={dog.image}
+                    src={dog.image || dog.photos?.[0]}
                     alt={dog.name}
                     className="favorite-image"
                   />
@@ -316,7 +329,7 @@ function BrowseDogs() {
       )}
 
       <BottomNav />
-    </div>
+    </PhoneLayout>
   );
 }
 

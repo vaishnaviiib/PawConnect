@@ -2,10 +2,18 @@
   box-sizing: border-box;
 }
 
+.phone-layout-device.dog-profile-page {
+  background: #f8f0d0 !important;
+  border-radius: 36px;
+  overflow: hidden;
+}
+
+.phone-layout-device.dog-profile-page .phone-layout-content {
+  background: #f8f0d0 !important;
+}
+
 .dog-profile-page {
-  min-height: 100vh;
   background: #f8f0d0;
-  padding: 20px;
   font-family: Arial, sans-serif;
 }
 
@@ -24,16 +32,16 @@
   height: 42px;
   font-size: 20px;
   cursor: pointer;
+  color: #000;
 }
 
 .profile-header h1 {
   margin: 0;
   font-size: 28px;
+  color: #000;
 }
 
 .profile-card {
-  max-width: 420px;
-  margin: 0 auto;
   background: #fff7df;
   border-radius: 24px;
   padding: 16px;
@@ -42,7 +50,7 @@
 
 .profile-image {
   width: 100%;
-  height: 340px;
+  height: 300px;
   object-fit: cover;
   border-radius: 20px;
   margin-bottom: 16px;
@@ -51,6 +59,7 @@
 .profile-info h2 {
   margin-top: 0;
   margin-bottom: 14px;
+  color: #000;
 }
 
 .profile-info p {

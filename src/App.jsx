@@ -11,9 +11,11 @@ import CreateDogProfile from "./pages/CreateDogProfile/CreateDogProfile";
 import ReviewApplications from "./pages/ReviewApplications/ReviewApplications";
 import ManageAppointments from "./pages/ManageAppointments/ManageAppointments";
 
+// Defines the app's top-level route map for adopter and shelter flows.
 function App() {
   return (
     <BrowserRouter>
+      {/* Each route renders a standalone mobile-style page inside the demo app. */}
       <Routes>
         <Route path="/" element={<SignUp />} />
         <Route path="/application-form" element={<ApplicationForm />} />

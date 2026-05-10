@@ -8,6 +8,7 @@ const apiPort = process.env.PORT || 5000;
 const target = `http://127.0.0.1:${apiPort}`;
 
 // https://vite.dev/config/
+// Configures Vite to compile the React app during local development and builds.
 export default defineConfig({
   plugins: [react()],
   server: {

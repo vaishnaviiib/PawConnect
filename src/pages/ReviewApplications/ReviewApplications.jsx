@@ -1,19 +1,25 @@
 import "./ReviewApplications.css";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import PhoneLayout from "../../components/PhoneLayout/PhoneLayout";
 import shelterApplications from "../../mockData/shelterApplications";
 import {
+  deleteDeclinedApplication,
+  getDataMode,
   getApplicationsForUser,
-  scheduleVisit,
   updateApplicationStatus,
 } from "../../lib/pawApi";
 
+// Gives shelter staff a queue for reviewing applications and scheduling visits.
 function ReviewApplications() {
+  const navigate = useNavigate();
+  const apiOnlyMode = getDataMode() === "api";
   const [localApplications, setLocalApplications] = useState([]);
-  const [activeScheduleId, setActiveScheduleId] = useState("");
-  const [scheduleDraft, setScheduleDraft] = useState({ date: "", time: "" });
+  const [dismissedMockApplicationIds, setDismissedMockApplicationIds] = useState([]);
   const [statusMessage, setStatusMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
+  // Loads saved applications and reshapes them to match the seeded review cards.
   useEffect(() => {
     let isMounted = true;
 
@@ -54,142 +60,146 @@ function ReviewApplications() {
     };
   }, []);
 
-  const combinedApplications = [
-    ...localApplications,
-    ...shelterApplications.map((application) => ({ ...application, isLocal: false })),
-  ];
+  // Appends static mock data so the review list stays populated during the demo.
+  const combinedApplications = (
+    apiOnlyMode
+      ? localApplications
+      : [...localApplications, ...shelterApplications.map((application) => ({ ...application, isLocal: false }))]
+  ).filter((application) => !dismissedMockApplicationIds.includes(application.id));
 
-  const handleStatusChange = (applicationId, status) => {
-    const nextApplications = updateApplicationStatus(applicationId, status);
-    setLocalApplications(
-      nextApplications.map((application) => ({
-        id: application.id,
-        applicantName: application.applicantName,
-        dogName: application.dogName,
-        applicationType: application.applicationType,
-        submittedAt: "Just now",
-        homeType: application.homeType || "Home details saved in demo application",
-        experience: application.experience || "Experience pending",
-        status: application.status,
-        isLocal: true,
-      }))
-    );
+  // Applies an approval or decline change and refreshes the local review list.
+  const handleStatusChange = async (applicationId, status) => {
+    try {
+      const nextApplications = await updateApplicationStatus(applicationId, status);
+      setLocalApplications(
+        nextApplications.map((application) => ({
+          id: application.id,
+          applicantName: application.applicantName,
+          dogName: application.dogName,
+          applicationType: application.applicationType,
+          submittedAt: "Just now",
+          homeType: application.homeType || "Home details saved in demo application",
+          experience: application.experience || "Experience pending",
+          status: application.status,
+          isLocal: true,
+        }))
+      );
+      setStatusMessage("Application status updated.");
+    } catch (error) {
+      setStatusMessage(error.message || "Could not update application status.");
+    }
   };
 
-  const handleConfirmVisit = (applicationId) => {
-    if (!scheduleDraft.date || !scheduleDraft.time) {
+  const handleDeleteDeclinedApplication = (application) => {
+    const isConfirmed = window.confirm(
+      "Are you sure you want to delete this declined application?"
+    );
+
+    if (!isConfirmed) {
       return;
     }
 
-    scheduleVisit({
-      applicationId,
-      date: scheduleDraft.date,
-      time: scheduleDraft.time,
-    });
+    if (application.isLocal) {
+      const nextApplications = deleteDeclinedApplication(application.id);
+      setLocalApplications(
+        nextApplications.map((item) => ({
+          id: item.id,
+          applicantName: item.applicantName,
+          dogName: item.dogName,
+          applicationType: item.applicationType,
+          submittedAt: "Just now",
+          homeType: item.homeType || "Home details saved in demo application",
+          experience: item.experience || "Experience pending",
+          status: item.status,
+          isLocal: true,
+        }))
+      );
+      return;
+    }
 
-    handleStatusChange(applicationId, "Visit Scheduled");
-    setActiveScheduleId("");
-    setScheduleDraft({ date: "", time: "" });
+    setDismissedMockApplicationIds((prev) => [...prev, application.id]);
   };
 
   return (
-    <main className="review-applications-page">
-      <section className="review-applications-shell">
-        <div className="review-applications-status">
-          <span>9:41</span>
-          <span>Applicant Queue</span>
-        </div>
+    <PhoneLayout className="review-applications-page">
+      <main className="review-applications-shell">
+          <button
+            type="button"
+            className="shelter-back-btn"
+            onClick={() => navigate("/shelter-dashboard")}
+          >
+            ← Back
+          </button>
+          {/* Header copy explains that this screen is still backed by mock-first data. */}
+          <header className="review-applications-header">
+            <h1>Review Applications ⋆˚✿˖°</h1>
+            <p>{/*Sort through mock applicant profiles before wiring this page to the API.*/}</p>
+            {statusMessage ? <p>{statusMessage}</p> : null}
+          </header>
 
-        <header className="review-applications-header">
-          <h1>Review Applications</h1>
-          <p>Sort through mock applicant profiles before wiring this page to the API.</p>
-          {statusMessage ? <p>{statusMessage}</p> : null}
-        </header>
-
-        <div className="review-applications-list">
-          {isLoading ? <article className="review-application-card">Loading applications...</article> : null}
-          {combinedApplications.map((application) => (
-            <article key={application.id} className="review-application-card">
-              <div className="review-application-top">
-                <div>
-                  <h2>{application.applicantName}</h2>
-                  <p>
-                    {application.applicationType} for {application.dogName}
-                  </p>
+          {/* Each card shows quick review data plus approval controls for the shelter. */}
+          <div className="review-applications-list">
+            {isLoading ? <article className="review-application-card">Loading applications...</article> : null}
+            {combinedApplications.map((application) => (
+              <article key={application.id} className="review-application-card">
+                <div className="review-application-top">
+                  <div>
+                    <h2>{application.applicantName} </h2>
+                    <p>
+                      {application.applicationType} for {application.dogName}
+                    </p>
+                  </div>
+                  <span>{application.status}</span>
                 </div>
-                <span>{application.status}</span>
-              </div>
 
-              <dl className="review-application-meta">
-                <div>
-                  <dt>Submitted</dt>
-                  <dd>{application.submittedAt}</dd>
-                </div>
-                <div>
-                  <dt>Home</dt>
-                  <dd>{application.homeType}</dd>
-                </div>
-                <div>
-                  <dt>Experience</dt>
-                  <dd>{application.experience}</dd>
-                </div>
-              </dl>
+                <dl className="review-application-meta">
+                  <div>
+                    <dt>Submitted</dt>
+                    <dd>{application.submittedAt}</dd>
+                  </div>
+                  <div>
+                    <dt>Home</dt>
+                    <dd>{application.homeType}</dd>
+                  </div>
+                  <div>
+                    <dt>Experience</dt>
+                    <dd>{application.experience}</dd>
+                  </div>
+                </dl>
 
-              <div className="review-application-actions">
-                <button
-                  type="button"
-                  disabled={!application.isLocal}
-                  onClick={() => handleStatusChange(application.id, "Approved")}
-                >
-                  Approve
-                </button>
-                <button
-                  type="button"
-                  disabled={!application.isLocal}
-                  onClick={() => handleStatusChange(application.id, "Declined")}
-                >
-                  Decline
-                </button>
-                <button
-                  type="button"
-                  disabled={!application.isLocal}
-                  onClick={() => {
-                    setActiveScheduleId(
-                      activeScheduleId === application.id ? "" : application.id
-                    );
-                    setScheduleDraft({ date: "", time: "" });
-                  }}
-                >
-                  Request Visit
-                </button>
-              </div>
-
-              {application.isLocal && activeScheduleId === application.id ? (
-                <div className="review-visit-form">
-                  <input
-                    type="date"
-                    value={scheduleDraft.date}
-                    onChange={(event) =>
-                      setScheduleDraft((prev) => ({ ...prev, date: event.target.value }))
-                    }
-                  />
-                  <input
-                    type="time"
-                    value={scheduleDraft.time}
-                    onChange={(event) =>
-                      setScheduleDraft((prev) => ({ ...prev, time: event.target.value }))
-                    }
-                  />
-                  <button type="button" onClick={() => handleConfirmVisit(application.id)}>
-                    Confirm Visit
+                <div className="review-application-actions">
+                  <button
+                    type="button"
+                    disabled={!application.isLocal}
+                    onClick={() => handleStatusChange(application.id, "Approved")}
+                  >
+                    Approve
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!application.isLocal}
+                    onClick={() => handleStatusChange(application.id, "Declined")}
+                  >
+                    Decline
                   </button>
                 </div>
-              ) : null}
-            </article>
-          ))}
-        </div>
-      </section>
-    </main>
+
+                {["Declined", "Rejected"].includes(application.status) ? (
+                  <div className="review-application-delete-row">
+                    <button
+                      type="button"
+                      className="review-application-delete-btn"
+                      onClick={() => handleDeleteDeclinedApplication(application)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                ) : null}
+              </article>
+            ))}
+          </div>
+      </main>
+    </PhoneLayout>
   );
 }
 
