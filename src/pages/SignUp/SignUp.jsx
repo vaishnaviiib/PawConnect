@@ -54,9 +54,13 @@ function SignUp() {
           message: `${payload.message} ${payload.error}`.trim(),
         });
       } else {
+        const successMessage =
+          typeof payload.message === "string"
+            ? payload.message
+            : payload.message || "Account created successfully.";
         setStatus({
           type: "success",
-          message: payload.message || "Account created successfully.",
+          message: successMessage,
         });
       }
 

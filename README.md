@@ -16,9 +16,12 @@ Copy [`.env.example`](.env.example) to `.env` and fill in real values, or create
 MONGO_URI=your_mongodb_connection_string
 JWT_SECRET=your_long_random_secret
 PORT=5000
+VITE_DATA_MODE=mock
 ```
 
 `PORT` is read by both **Express** (`server.js`) and **Vite’s dev proxy** ([`vite.config.js`](vite.config.js)). If you change `PORT`, keep `.env` loaded before starting the client so the proxy matches the API.
+
+**Client data mode (`VITE_DATA_MODE`):** `mock` (default in [`.env.example`](.env.example) and in [`src/lib/pawApi.js`](src/lib/pawApi.js) when unset) uses bundled mock data—including browse dog images from [`src/mockData/dogs.js`](src/mockData/dogs.js)—without requiring a populated `GET /dogs` or Mongo `photos`. Use `hybrid` to try the API first and fall back to mock on failure, or `api` for API-only.
 
 Optional for the client when not using the Vite dev proxy:
 

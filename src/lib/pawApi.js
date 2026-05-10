@@ -5,7 +5,7 @@ const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
   import.meta.env.VITE_API_URL ||
   "http://127.0.0.1:5000";
-const DATA_MODE = (import.meta.env.VITE_DATA_MODE || "hybrid").toLowerCase();
+const DATA_MODE = (import.meta.env.VITE_DATA_MODE || "mock").toLowerCase();
 const API_ONLY_MODE = DATA_MODE === "api";
 const MOCK_ONLY_MODE = DATA_MODE === "mock";
 const CURRENT_USER_KEY = "pawconnectCurrentUser";
@@ -17,6 +17,21 @@ const SHELTER_DOGS_KEY = "pawconnectShelterDogs";
 const APPOINTMENTS_KEY = "pawconnectAppointments";
 const APPOINTMENTS_FEATURE_MESSAGE =
   "Appointments are demo-only in API mode until backend endpoints are connected.";
+
+/** Internal sentinel when mock mode skips the API; never shown as user-facing error text. */
+const MOCK_API_SKIP_MESSAGE = "__pawconnect_mock_api_skip__";
+
+const throwMockApiSkip = () => {
+  throw new Error(MOCK_API_SKIP_MESSAGE);
+};
+
+const uiDataError = (error) => {
+  const message = error?.message || "";
+  if (message === MOCK_API_SKIP_MESSAGE || message === "Mock mode enabled.") {
+    return "";
+  }
+  return message;
+};
 
 export const getDataMode = () => DATA_MODE;
 export const isApiMode = () => API_ONLY_MODE;
@@ -295,7 +310,7 @@ export const registerUser = async ({ name, email, phone, password, role }) => {
     saveCurrentUser(user);
     return {
       success: true,
-      message: "Mock mode enabled. Account created locally for demo flow.",
+      message: "",
       user,
       token: "",
       source: "local",
@@ -344,11 +359,11 @@ export const registerUser = async ({ name, email, phone, password, role }) => {
 
     return {
       success: true,
-      message: "Backend unavailable. Account created locally for demo flow.",
+      message: "",
       user,
       token: "",
       source: "local",
-      error: error.message,
+      error: uiDataError(error),
     };
   }
 };
@@ -401,7 +416,7 @@ export const createDogProfile = async (dog) => {
 
   try {
     if (MOCK_ONLY_MODE) {
-      throw new Error("Mock mode enabled.");
+      throwMockApiSkip();
     }
 
     if (!currentUser?.token) {
@@ -446,7 +461,7 @@ export const createDogProfile = async (dog) => {
       return {
         dog: null,
         source: "api",
-        error: error.message,
+        error: uiDataError(error),
       };
     }
 
@@ -454,7 +469,7 @@ export const createDogProfile = async (dog) => {
     return {
       dog: localDog,
       source: "local",
-      error: error.message,
+      error: uiDataError(error),
     };
   }
 };
@@ -465,7 +480,7 @@ export const getDogs = async () => {
 
   try {
     if (MOCK_ONLY_MODE) {
-      throw new Error("Mock mode enabled.");
+      throwMockApiSkip();
     }
 
     const payload = await apiFetch("/dogs");
@@ -483,14 +498,14 @@ export const getDogs = async () => {
       return {
         dogs: [],
         source: "api",
-        error: error.message,
+        error: uiDataError(error),
       };
     }
 
     return {
       dogs: mergeById([...localDogs, ...mockDogs.map((dog) => normalizeDog(dog))]),
       source: "local",
-      error: error.message,
+      error: uiDataError(error),
     };
   }
 };
@@ -511,7 +526,7 @@ export const getDogById = async (id) => {
 
   try {
     if (MOCK_ONLY_MODE) {
-      throw new Error("Mock mode enabled.");
+      throwMockApiSkip();
     }
 
     const payload = await apiFetch(`/dogs/${id}`);
@@ -525,7 +540,7 @@ export const getDogById = async (id) => {
       return {
         dog: null,
         source: "api",
-        error: error.message,
+        error: uiDataError(error),
       };
     }
 
@@ -533,7 +548,7 @@ export const getDogById = async (id) => {
     return {
       dog: fallbackDog ? normalizeDog(fallbackDog) : null,
       source: fallbackDog ? "local" : "none",
-      error: error.message,
+      error: uiDataError(error),
     };
   }
 };
@@ -632,7 +647,7 @@ export const submitDogInterest = async (dog) => {
 
   try {
     if (MOCK_ONLY_MODE) {
-      throw new Error("Mock mode enabled.");
+      throwMockApiSkip();
     }
 
     if (
@@ -683,7 +698,7 @@ export const submitDogInterest = async (dog) => {
       return {
         application: null,
         source: "api",
-        error: error.message,
+        error: uiDataError(error),
         isDuplicate: false,
       };
     }
@@ -694,7 +709,7 @@ export const submitDogInterest = async (dog) => {
     return {
       application: localApplication,
       source: "local",
-      error: error.message,
+      error: uiDataError(error),
       isDuplicate: false,
     };
   }
@@ -707,7 +722,7 @@ export const getApplicationsForUser = async () => {
 
   try {
     if (MOCK_ONLY_MODE) {
-      throw new Error("Mock mode enabled.");
+      throwMockApiSkip();
     }
 
     if (!isObjectId(currentUser?._id)) {
@@ -735,14 +750,14 @@ export const getApplicationsForUser = async () => {
       return {
         applications: [],
         source: "api",
-        error: error.message,
+        error: uiDataError(error),
       };
     }
 
     return {
       applications: dedupeApplications(localApplications),
       source: "local",
-      error: error.message,
+      error: uiDataError(error),
     };
   }
 };
@@ -751,7 +766,7 @@ export const getApplicationsForUser = async () => {
 export const updateApplicationStatus = async (applicationId, status) => {
   try {
     if (MOCK_ONLY_MODE) {
-      throw new Error("Mock mode enabled.");
+      throwMockApiSkip();
     }
 
     if (!["Approved", "Declined"].includes(status)) {
