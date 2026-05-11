@@ -13,7 +13,9 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "cross-env NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --runInBand"
+    "test": "npm run test:unit && npm run test:integration",
+    "test:unit": "cross-env NODE_ENV=test VITE_DATA_MODE=hybrid NODE_OPTIONS=--experimental-vm-modules jest --config jest.config.unit.mjs --runInBand",
+    "test:integration": "cross-env NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --config jest.config.integration.mjs --runInBand"
   },
   "repository": {
     "type": "git",
@@ -26,13 +28,6 @@
     "url": "https://github.com/vaishnaviiib/PawConnect/issues"
   },
   "homepage": "https://github.com/vaishnaviiib/PawConnect#readme",
-  "jest": {
-    "testEnvironment": "node",
-    "setupFilesAfterEnv": [
-      "<rootDir>/tests/setup.js"
-    ],
-    "transform": {}
-  },
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",

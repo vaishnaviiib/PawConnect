@@ -1,11 +1,18 @@
 import mockDogs from "../mockData/dogs.js";
 
 // Centralizes API and local-storage behavior so the UI can work online or offline.
+// import.meta.env is injected by Vite; under plain Node (Jest) it may be undefined.
+const viteEnv = import.meta.env ?? {};
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ||
-  import.meta.env.VITE_API_URL ||
+  viteEnv.VITE_API_BASE_URL ||
+  viteEnv.VITE_API_URL ||
+  (typeof process !== "undefined" && process.env.VITE_API_URL) ||
   "http://127.0.0.1:5000";
-const DATA_MODE = (import.meta.env.VITE_DATA_MODE || "mock").toLowerCase();
+const rawDataMode =
+  viteEnv.VITE_DATA_MODE ??
+  (typeof process !== "undefined" ? process.env.VITE_DATA_MODE : undefined) ??
+  "mock";
+const DATA_MODE = String(rawDataMode).toLowerCase();
 const API_ONLY_MODE = DATA_MODE === "api";
 const MOCK_ONLY_MODE = DATA_MODE === "mock";
 const CURRENT_USER_KEY = "pawconnectCurrentUser";
@@ -854,6 +861,12 @@ export const requestVisitAppointment = ({ applicationId, date, time }) => {
 
   const existingAppointments = getAppointments();
   writeJson(APPOINTMENTS_KEY, [nextAppointment, ...existingAppointments]);
+
+  saveSubmittedApplications(
+    getSubmittedApplications().map((app) =>
+      app.id === applicationId ? { ...app, status: "Visit Scheduled" } : app,
+    ),
+  );
 
   return nextAppointment;
 };

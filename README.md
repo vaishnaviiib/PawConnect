@@ -263,20 +263,32 @@ Each page folder contains:
 Tests
 --------------------------------------------------
 
-tests/applications.test.js
-- Tests for application API routes.
+jest.config.unit.mjs
+- Jest configuration for unit tests only.
 
-tests/auth.test.js
-- Tests for authentication routes.
+jest.config.integration.mjs
+- Jest configuration for integration tests (loads MongoDB setup).
 
-tests/dogs.test.js
-- Tests for dog API routes.
+tests/unit/README.txt
+- How to run unit tests.
 
-tests/frontend/pawApi.test.js
-- Tests for client API utility behavior.
+tests/unit/pawApi.test.js
+- Unit tests for client API utility behavior (mocked fetch and localStorage).
 
-tests/setup.js
-- Jest setup and MongoDB cleanup configuration.
+tests/integration/README.txt
+- How to run integration tests.
+
+tests/integration/setup.js
+- Jest setup: loads .env.test, connects MongoDB, clears data between tests, drops test DB after suite.
+
+tests/integration/auth.test.js
+- Integration tests for authentication routes.
+
+tests/integration/dogs.test.js
+- Integration tests for dog API routes.
+
+tests/integration/applications.test.js
+- Integration tests for application API routes.
 
 
 SECTION 2 — Prerequisites and Installation
@@ -384,6 +396,19 @@ http://localhost:5173
 
 Open this URL in a web browser.
 
+AUTOMATED TESTS (run from project root; optional during development)
+
+Unit tests (no MongoDB; npm sets VITE_DATA_MODE=hybrid for Jest):
+  npm run test:unit
+  See tests/unit/README.txt and jest.config.unit.mjs.
+
+Integration tests (HTTP + MongoDB; requires .env.test with MONGO_URI or MONGO_URL and JWT_SECRET):
+  npm run test:integration
+  See tests/integration/README.txt and jest.config.integration.mjs.
+  Setup file tests/integration/setup.js clears data between tests and drops the test database after the suite.
+
+Full suite (unit tests, then integration tests):
+  npm test
 
 SECTION 6 — User Authentication
 ==================================================
@@ -486,8 +511,14 @@ npm run preview
 npm run lint
 - Runs ESLint checks
 
+npm run test:unit
+- Runs Jest unit tests only (no MongoDB)
+
+npm run test:integration
+- Runs Jest integration tests (requires .env.test and MongoDB)
+
 npm test
-- Runs Jest test suites
+- Runs unit tests then integration tests (full Jest suite)
 
 
 SECTION 9 — API Parameters
