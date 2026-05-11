@@ -20,9 +20,6 @@ HOW TO RUN (from the project root directory)
   npm run dev:server
   npm run test:integration
 
-  Equivalent command:
-  cross-env NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --config jest.config.integration.mjs --runInBand
-
   To run the full suite (unit tests then integration tests):
   npm test
 
