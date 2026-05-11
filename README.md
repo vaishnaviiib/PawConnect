@@ -1,6 +1,4 @@
-================================================================================
-PAWCONNECT - README.TXT
-================================================================================
+README.TXT
 
 PawConnect is a full-stack web application: a React 19 single-page client
 (bundled with Vite 8) and an Express 5 REST API backed by MongoDB (Mongoose).
@@ -9,9 +7,9 @@ server; configuration is via environment variables. Running the software means
 starting the API with Node.js and opening the client in a web browser (Vite
 dev server or static files from dist/).
 
-================================================================================
+
 SECTION 1 - FILE INVENTORY (ALL PROJECT FILES AND BRIEF DESCRIPTIONS)
-================================================================================
+
 --- Root and configuration ---
 .env.example - Sample environment variables for local API and Vite (copy to .env).
 .env.test.example - Sample variables for Jest; copy to .env.test.
@@ -120,9 +118,9 @@ tests/dogs.test.js - Jest/Supertest tests for dog API routes.
 tests/frontend/pawApi.test.js - Jest tests for client pawApi module behavior.
 tests/setup.js - Jest setup: loads .env.test, connects Mongo, clears data between tests, drops test DB after suite.
 
-================================================================================
+
 SECTION 2 - PREREQUISITES AND INSTALL
-================================================================================
+======================================
 
 Prerequisites:
   - Node.js 18 or newer
@@ -136,9 +134,9 @@ Install dependencies (from the project root directory):
 This downloads all packages listed in package.json into node_modules/ (not
 tracked in git).
 
-================================================================================
+
 SECTION 3 - HOW TO COMPILE / BUILD A RUNNABLE RESULT
-================================================================================
+======================================================
 
 This project is JavaScript. Nothing is compiled to a single machine binary.
 
@@ -153,9 +151,9 @@ This project is JavaScript. Nothing is compiled to a single machine binary.
    Runtime:  Node executes server.js directly (ES modules: "type": "module" in
              package.json).
 
-================================================================================
+
 SECTION 4 - WHERE TO FIND THE "EXECUTABLE" / BUILT OUTPUT
-================================================================================
+==============================================================
 
 No standalone executable (.exe, etc.) is included in the repository.
 
@@ -166,9 +164,9 @@ No standalone executable (.exe, etc.) is included in the repository.
 The React app in the browser is not a separate file you double-click; it loads
 from the Vite dev server during development or from dist/ in production.
 
-================================================================================
-SECTION 5 - HOW TO RUN THE SOFTWARE (NO COMMAND-LINE PARAMETERS)
-================================================================================
+
+SECTION 5 - HOW TO RUN THE SOFTWARE 
+====================================================================
 
 The server does not read argv flags. All runtime tuning is via environment
 variables (see Section 6).
@@ -196,9 +194,9 @@ Terminal 2 - Client:
 
 Open the printed local URL in a web browser.
 
-================================================================================
+
 SECTION 6 - AUTHENTICATION AND EXAMPLE CREDENTIALS
-================================================================================
+=====================================================
 
 User authentication is required for many API actions and for logged-in UI flows.
 There are NO pre-seeded demo users shipped with the app. You must create a user
@@ -226,12 +224,12 @@ Registration (POST /auth/register or Sign Up form) required fields:
   name, email, phone, password, role
 
 Allowed values:
-  role: must be exactly one of:  adopter  |  shelter
+  role: must be exactly one of:  adopter, foster, shelter
   password: minimum 6 characters (see models/User.js)
 
-================================================================================
+
 SECTION 7 - ALL PARAMETERS / CONFIGURATION VALUES AT RUN TIME
-================================================================================
+==================================================================
 
 7a) Main application .env (copy from .env.example)
 
