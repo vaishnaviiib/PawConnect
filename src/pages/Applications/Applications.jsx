@@ -1,3 +1,9 @@
+/* 
+written by: Karla
+tested by: Andria & Karla
+debugged by: Andria & Karla
+*/
+
 import "./Applications.css";
 import { useEffect, useMemo, useState } from "react";
 import BottomNav from "../../components/BottomNav/BottomNav";

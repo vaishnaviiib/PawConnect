@@ -11,6 +11,8 @@ node_modules
 .backend-api
 dist
 dist-ssr
+.vite/
+.codex/environments/
 .env
 .env.*
 !.env.example
@@ -31,3 +33,6 @@ dist-ssr
 
 # Assignment / data collection (local only; not part of app source)
 2_data_collection/
+
+.vite/
+.codex/environments/

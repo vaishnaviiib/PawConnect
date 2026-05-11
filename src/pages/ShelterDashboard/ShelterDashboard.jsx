@@ -1,3 +1,9 @@
+/* 
+written by: Karla
+tested by: Andria & Karla
+debugged by: Andria & Karla
+*/
+
 import "./ShelterDashboard.css";
 import { useState } from "react";
 import { Link } from "react-router-dom";

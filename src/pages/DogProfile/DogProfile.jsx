@@ -1,3 +1,10 @@
+/* 
+written by: Karla
+tested by: Andria & Karla
+debugged by: Andria & Karla
+*/
+
+
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import "./DogProfile.css";

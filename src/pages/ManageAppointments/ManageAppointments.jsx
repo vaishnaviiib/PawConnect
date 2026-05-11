@@ -1,3 +1,8 @@
+/* 
+written by: Andria
+tested by: Andria & Karla
+debugged by: Andria & Karla
+*/
 import "./ManageAppointments.css";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";

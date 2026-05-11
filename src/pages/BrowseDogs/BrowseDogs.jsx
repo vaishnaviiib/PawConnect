@@ -1,3 +1,9 @@
+/* 
+written by: Karla
+tested by: Andria & Karla
+debugged by: Andria & Karla
+*/
+
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./BrowseDogs.css";
@@ -14,8 +20,19 @@ function BrowseDogs() {
   const [selectedBreed, setSelectedBreed] = useState("All");
   const [selectedAge, setSelectedAge] = useState("All");
   const [selectedLocation, setSelectedLocation] = useState("All");
+  /*
   const [currentIndex, setCurrentIndex] = useState(0);
   const [favorites, setFavorites] = useState([]);
+  */
+ const [currentIndex, setCurrentIndex] = useState(() => {
+  return Number(localStorage.getItem("pawCurrentDogIndex")) || 0;
+});
+const [favorites, setFavorites] = useState(() => {
+  return JSON.parse(localStorage.getItem("pawFavorites")) || [];
+});
+const [skippedDogs, setSkippedDogs] = useState(() => {
+  return JSON.parse(localStorage.getItem("pawSkippedDogs")) || [];
+});
   const [dogs, setDogs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
@@ -41,6 +58,19 @@ function BrowseDogs() {
     };
   }, []);
 
+  useEffect(() => {
+  localStorage.setItem("pawFavorites", JSON.stringify(favorites));
+}, [favorites]);
+
+useEffect(() => {
+  localStorage.setItem("pawSkippedDogs", JSON.stringify(skippedDogs));
+}, [skippedDogs]);
+
+useEffect(() => {
+  localStorage.setItem("pawCurrentDogIndex", String(currentIndex));
+}, [currentIndex]);
+
+
   // Applies the selected filter values to the available dog list.
   const filteredDogs = useMemo(() => {
     return dogs.filter((dog) => {
@@ -58,13 +88,19 @@ function BrowseDogs() {
     });
   }, [dogs, selectedBreed, selectedAge, selectedLocation]);
 
-  const listIndex = useMemo(() => {
+  useEffect(() => {
+  setCurrentIndex((prev) => {
     if (filteredDogs.length === 0) {
       return 0;
     }
 
-    return currentIndex >= filteredDogs.length ? 0 : currentIndex;
-  }, [filteredDogs, currentIndex]);
+    if (prev > filteredDogs.length) {
+      return filteredDogs.length;
+    }
+
+    return prev;
+  });
+}, [filteredDogs.length]);  
 
   // Builds breed options from the current data set instead of hardcoding them.
   const breedOptions = useMemo(
@@ -78,15 +114,19 @@ function BrowseDogs() {
     [dogs]
   );
 
-  const currentDog = filteredDogs[listIndex];
+  const currentDog = filteredDogs[currentIndex];
 
   // Advances past the current card without saving it.
   const handleSkip = () => {
-    if (listIndex < filteredDogs.length - 1) {
-      setCurrentIndex(listIndex + 1);
-    } else {
-      setCurrentIndex(filteredDogs.length);
-    }
+    if (currentDog && !skippedDogs.some((dog) => dog.id === currentDog.id)) {
+    setSkippedDogs((prev) => [...prev, currentDog]);
+  }
+
+  if (currentIndex < filteredDogs.length - 1) {
+    setCurrentIndex((prev) => prev + 1);
+  } else {
+    setCurrentIndex(filteredDogs.length);
+  }
   };
 
   // Saves the current dog to favorites and then advances the deck.
@@ -99,8 +139,8 @@ function BrowseDogs() {
       setFavorites((prev) => [...prev, currentDog]);
     }
 
-    if (listIndex < filteredDogs.length - 1) {
-      setCurrentIndex(listIndex + 1);
+    if (currentIndex < filteredDogs.length - 1) {
+      setCurrentIndex((prev) => prev + 1);
     } else {
       setCurrentIndex(filteredDogs.length);
     }
@@ -156,7 +196,6 @@ function BrowseDogs() {
           }`}
           onClick={() => {
             setSelectedTab("forYou");
-            setCurrentIndex(0);
           }}
         >
           For you
