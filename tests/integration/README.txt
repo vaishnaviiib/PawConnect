@@ -17,6 +17,7 @@ WHERE THE TEST CODE LIVES
   tests/integration/setup.js
 
 HOW TO RUN (from the project root directory)
+  npm run dev:server
   npm run test:integration
 
   Equivalent command:
